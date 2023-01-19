@@ -1,0 +1,273 @@
+#!/usr/bin/env node
+
+/* eslint-disable no-console */
+/* eslint-disable no-restricted-globals */
+import * as fs from "node:fs/promises";
+import { argv, env, exit } from "node:process";
+import path from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
+import glob from "glob";
+import { parse } from "yaml";
+import { Octokit } from "@octokit/core";
+import { throttling } from "@octokit/plugin-throttling";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import readline from "readline";
+
+const RETRY_COUNT = 20;
+const DELAY = 5 * 60;
+const WORKSPACE_DIR = "mass-pr-workspace";
+
+const ThrottledOctokit = Octokit.plugin(throttling);
+
+const octokit = new ThrottledOctokit({
+  auth: env["GITHUB_TOKEN"],
+  throttle: {
+    minimumSecondaryRateRetryAfter: DELAY,
+
+    onRateLimit: (retryAfter, options) => {
+      if (options.request.retryCount < RETRY_COUNT) {
+        octokit.log.warn(
+          `Request quota exhausted for request ${options.method} ${options.url}`,
+          `Retrying after ${retryAfter} seconds!`
+        );
+        return true;
+      }
+    },
+
+    onSecondaryRateLimit: (retryAfter, options) => {
+      if (options.request.retryCount < RETRY_COUNT) {
+        octokit.log.warn(
+          `Secondary rate limit hit for ${options.method} ${options.url}`,
+          `Retrying after ${retryAfter} seconds!`
+        );
+        return true;
+      }
+    },
+  },
+});
+
+// Workaround for @octokit/plugin-throttling bug
+// See: https://github.com/octokit/plugin-throttling.js/pull/462
+octokit.hook.after("request", async (response, options) => {
+  if (options.request.retryCount) {
+    options.request.retryCount = 0;
+  }
+});
+
+function log(...message) {
+  const green = "\x1b[32m";
+  const reset = "\x1b[0m";
+  console.log(`${green}[mass-pr]${reset}`, ...message);
+}
+
+function run(cmd, ...args) {
+  let opts;
+
+  if (typeof args[args.length - 1] === "object") {
+    opts = args.pop();
+  }
+
+  execFileSync(cmd, args, { stdio: "inherit", ...opts });
+}
+
+function runInRepo(cmd, ...args) {
+  run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
+}
+
+async function waitForKeypress() {
+  readline.emitKeypressEvents(process.stdin);
+
+  process.stdin.setRawMode(true);
+  return new Promise((resolve) =>
+    process.stdin.on("keypress", (data, key) => {
+      process.stdin.setRawMode(false);
+      resolve(key.name);
+    })
+  );
+}
+
+async function makePR({
+  script,
+  branch,
+  body,
+  message,
+  mode,
+  repository,
+  dryRun,
+}) {
+  const [owner, repoNoOwner] = repository.split("/");
+
+  await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
+
+  const url =
+    mode === "ssh"
+      ? `git@github.com:${repository}`
+      : `https://github.com/${repository}`;
+
+  run("git", "clone", "-q", "--depth", "1", url, `${WORKSPACE_DIR}/repo`);
+
+  const defaultBranch = execFileSync(
+    "git",
+    ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
+    {
+      encoding: "utf8",
+    }
+  ).trim();
+
+  log(`Running '${script}' for '${repository}'...`);
+
+  let done = false;
+  while (true) {
+    try {
+      run(`../${script}`, { cwd: `./${WORKSPACE_DIR}` });
+      break;
+    } catch (err) {
+      log(`Script run failed for '${repository}'`);
+
+      if (!process.stdin.isTTY) {
+        throw err;
+      }
+
+      log(
+        `s to skip this repo, r to retry the script, p to make a PR anyway, any other key to exit`
+      );
+      const key = await waitForKeypress();
+
+      if (key === "s") {
+        log(`Skipping ${repository}`);
+        return;
+      } else if (key === "r") {
+        log(`Retrying ${repository}`);
+        continue;
+      } else if (key === "p") {
+        log(`Making a PR anyway`);
+        break;
+      } else {
+        log(`Exiting...`);
+        exit(1);
+      }
+    }
+  }
+
+  const anyChanges =
+    execFileSync(
+      "git",
+      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
+      {
+        encoding: "utf8",
+      }
+    ).trim() !== "";
+
+  if (dryRun) {
+    log(`[dry-run] '${repository}' done`);
+    log(
+      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press n to try next repo. Any other key to quit.`
+    );
+    const key = await waitForKeypress();
+    if (key === "n") {
+      return;
+    } else {
+      exit(1);
+    }
+  }
+
+  if (!anyChanges) {
+    log(`✅ '${repository}' is already up to date`);
+    return;
+  }
+
+  log(`Updating '${branch}' branch for '${repository}'`);
+
+  runInRepo("git", "checkout", "-b", branch);
+  runInRepo("git", "add", ".");
+  runInRepo("git", "commit", "-q", "-m", message);
+  runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
+
+  try {
+    await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+      owner,
+      repo: repoNoOwner,
+      title: message,
+      head: branch,
+      base: defaultBranch,
+      body: body,
+    });
+    log(`✅ PR created for '${repository}'`);
+  } catch (error) {
+    const message = error.response?.data?.errors?.[0]?.message;
+
+    if (message && /A pull request already exists/.test(message)) {
+      log(`✅ PR already exists for '${repository}'`);
+    } else {
+      console.error(error);
+      throw `❓ Failed to create PR for '${repository}'`;
+    }
+  }
+}
+
+async function massPR(args) {
+  await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
+  await fs.mkdir(`./${WORKSPACE_DIR}`);
+  for (const repository of args.repositories) {
+    await makePR({ ...args, repository });
+  }
+  await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
+  log("Complete 🚀");
+  exit(0);
+}
+
+yargs(hideBin(process.argv))
+  .command(
+    ["* <repositories..>"],
+    "Runs <script> for each repository",
+    (yargs) => {
+      yargs
+        .option("script", {
+          describe:
+            "Executable to run for each repository. Will be launched in a temporary working directory. The repository will be available under `./repo`.",
+          demandOption: true,
+        })
+        .option("message", {
+          alias: "m",
+          type: "string",
+          description: "Commit message (and PR title)",
+          demandOption: true,
+        })
+        .option("branch", {
+          alias: "b",
+          type: "string",
+          description: "Branch name",
+          demandOption: true,
+        })
+        .option("body", {
+          type: "string",
+          description: "PR body",
+        })
+        .option("mode", {
+          type: "string",
+          description: "Use ssh or https for git operations",
+          default: "ssh",
+          choices: ["ssh", "https"],
+        })
+        .option("dry-run", {
+          type: "boolean",
+          description: "Stop before pushing changes to GitHub",
+        })
+        .positional("repositories", {
+          describe:
+            "A list of GitHub repositories to loop over. {organisation}/{repo}",
+          array: true,
+        });
+    },
+    (args) => {
+      if (!env["GITHUB_TOKEN"]) {
+        log("You must specify GITHUB_TOKEN to use this tool");
+        exit(1);
+      }
+      massPR(args);
+    }
+  )
+  .demandCommand()
+  // .fail(false)
+  .parse();

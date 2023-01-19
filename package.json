@@ -1,0 +1,21 @@
+{
+  "name": "mass-pr",
+  "version": "1.0.0",
+  "description": "A tool for creating automated PRs across multiple GitHub repositories",
+  "main": "mass-pr.js",
+  "scripts": {
+    "mass-pr": "./mass-pr.js"
+  },
+  "repository": "https://github.com/discourse/mass-pr",
+  "author": "Discourse Team",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "@octokit/core": "^3.6.0",
+    "@octokit/plugin-throttling": "^3.6.2",
+    "glob": "^8.0.3",
+    "yaml": "^2.1.0",
+    "yargs": "^17.6.2"
+  }
+}
