@@ -1,9 +1,15 @@
 #!/bin/bash
 set -euxo pipefail
 
+../scripts/ensure-minimum-scaffolding.sh
+
 cd repo
 
-yarn upgrade eslint-config-discourse
+# Rename all *.js.es6 to *.js
+find . -depth -name "*.js.es6" -exec sh -c 'mv "$1" "${1%.es6}"' _ {} \;
+
+yarn install
+yarn add eslint-config-discourse --dev # Better than `yarn upgrade` in this case because we want to update `package.json`
 yarn install
 
 if [ -f "plugin.rb" ]; then
