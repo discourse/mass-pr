@@ -80,7 +80,7 @@ async function waitForKeypress() {
 
   process.stdin.setRawMode(true);
   return new Promise((resolve) =>
-    process.stdin.on("keypress", (data, key) => {
+    process.stdin.once("keypress", (data, key) => {
       process.stdin.setRawMode(false);
       resolve(key.name);
     })
