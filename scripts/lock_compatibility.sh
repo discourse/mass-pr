@@ -1,7 +1,9 @@
 #!/bin/bash
+# Adds an entry to `.discourse-compatibility` which pins the specified core version (via `CORE_VERSION` environment variable)
+# to the plugin/theme's current main branch commit hash
+
 set -exo pipefail
 
-echo "hello" 
 cd repo
 
 if [[ -z "${CORE_VERSION}" ]]; then
