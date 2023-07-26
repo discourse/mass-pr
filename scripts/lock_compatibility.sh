@@ -17,6 +17,11 @@ if [ ! -f ".discourse-compatibility" ]; then
   echo "" > .discourse-compatibility
 fi
 
+if grep -q "$CORE_VERSION" ".discourse-compatibility"; then
+  echo "Plugin already has a discourse-compatibility entry for this version. Skipping"
+  exit 0
+fi
+
 PREPEND_LINE="$CORE_VERSION: $CURRENT_PLUGIN_MAIN_HASH"
 
 echo -e "$PREPEND_LINE\\n$(cat .discourse-compatibility)" > .discourse-compatibility
