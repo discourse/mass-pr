@@ -6,11 +6,11 @@ This tool is intended to help apply automated changes across a large number of G
 
 2. For each plugin:
 
-     a) Clone default branch into `mass-pr-workspace/repo`
+   a) Clone default branch into `mass-pr-workspace/repo`
 
-     b) Run specified script in the `mass-pr-workspace`. On failure, offers to skip, retry the script, or abort the mass-pr run.
+   b) Run specified script in the `mass-pr-workspace`. On failure, offers to skip, retry the script, or abort the mass-pr run.
 
-     c) If there are changes, make a branch / commit / PR
+   c) If there are changes, make a branch / commit / PR
 
 3. Delete `mass-pr-workspace`
 

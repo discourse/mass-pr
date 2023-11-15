@@ -17,5 +17,10 @@
     "glob": "^8.0.3",
     "yaml": "^2.1.0",
     "yargs": "^17.6.2"
+  },
+  "devDependencies": {
+    "@discourse/lint-configs": "^1.0.0",
+    "eslint": "^8.53.0",
+    "prettier": "^2.8.8"
   }
 }

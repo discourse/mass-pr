@@ -25,4 +25,3 @@ fi
 PREPEND_LINE="$CORE_VERSION: $CURRENT_PLUGIN_MAIN_HASH"
 
 echo -e "$PREPEND_LINE\\n$(cat .discourse-compatibility)" > .discourse-compatibility
-
