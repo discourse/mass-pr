@@ -1,18 +1,14 @@
 #!/usr/bin/env node
-
 /* eslint-disable no-console */
-/* eslint-disable no-restricted-globals */
-import * as fs from "node:fs/promises";
-import { argv, env, exit } from "node:process";
-import path from "node:path";
-import { execFileSync, spawnSync } from "node:child_process";
-import glob from "glob";
-import { parse } from "yaml";
+
 import { Octokit } from "@octokit/core";
 import { throttling } from "@octokit/plugin-throttling";
+import { execFileSync } from "node:child_process";
+import * as fs from "node:fs/promises";
+import { env, exit } from "node:process";
+import readline from "readline";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import readline from "readline";
 
 const RETRY_COUNT = 20;
 const DELAY = 5 * 60;
@@ -117,7 +113,6 @@ async function makePR({
 
   log(`Running '${script}' for '${repository}'...`);
 
-  let done = false;
   while (true) {
     try {
       run(`../${script}`, { cwd: `./${WORKSPACE_DIR}` });
@@ -191,13 +186,13 @@ async function makePR({
       title: message,
       head: branch,
       base: defaultBranch,
-      body: body,
+      body,
     });
     log(`✅ PR created for '${repository}'`);
   } catch (error) {
-    const message = error.response?.data?.errors?.[0]?.message;
+    const errorMessage = error.response?.data?.errors?.[0]?.message;
 
-    if (message && /A pull request already exists/.test(message)) {
+    if (errorMessage && /A pull request already exists/.test(errorMessage)) {
       log(`✅ PR already exists for '${repository}'`);
     } else {
       console.error(error);
@@ -221,8 +216,8 @@ yargs(hideBin(process.argv))
   .command(
     ["* <repositories..>"],
     "Runs <script> for each repository",
-    (yargs) => {
-      yargs
+    (args) => {
+      args
         .option("script", {
           describe:
             "Executable to run for each repository. Will be launched in a temporary working directory. The repository will be available under `./repo`.",
@@ -269,5 +264,4 @@ yargs(hideBin(process.argv))
     }
   )
   .demandCommand()
-  // .fail(false)
   .parse();

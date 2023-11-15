@@ -36,4 +36,3 @@ fi
 if ! grep -q 'node_modules' repo/.gitignore; then
   echo "node_modules" >> repo/.gitignore
 fi
-

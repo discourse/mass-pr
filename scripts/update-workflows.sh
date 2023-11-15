@@ -13,4 +13,4 @@ else
 fi
 
 # Cleanup old workflows
-git -C repo rm --ignore-unmatch .github/workflows/plugin-linting.yml .github/workflows/plugin-tests.yml .github/workflows/component-linting.yml .github/workflows/component-tests.yml 
+git -C repo rm --ignore-unmatch .github/workflows/plugin-linting.yml .github/workflows/plugin-tests.yml .github/workflows/component-linting.yml .github/workflows/component-tests.yml
