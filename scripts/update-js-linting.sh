@@ -23,6 +23,13 @@ else # Theme
   cp -vn ../discourse-theme-skeleton/.template-lintrc.js . || true
 fi
 
+# Remove the old transpile_js option
+if [ -f "repo/plugin.rb" ]; then
+  if grep -q 'transpile_js: true' plugin.rb; then
+    ruby -e 'File.write("plugin.rb", File.read("plugin.rb").gsub(/^# transpile_js: true\n/, ""))'
+  end
+fi
+
 # Use the current linting setup
 yarn remove eslint-config-discourse
 yarn add --dev @discourse/lint-configs eslint prettier@^2.8.8 ember-template-lint
