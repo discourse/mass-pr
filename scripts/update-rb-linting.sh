@@ -26,7 +26,7 @@ fi
 
 # Remove the old stree plugin
 if grep -q 'syntax_tree-disable_ternary' Gemfile; then
-  out=$(awk '!/syntax_tree-disable_ternary/' Gemfile); echo $out > Gemfile
+  ruby -e 'File.write("Gemfile", File.read("Gemfile").gsub(/^\s*gem .syntax_tree-disable_ternary.\n/, ""))'
   sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
