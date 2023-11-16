@@ -10,28 +10,30 @@ if [ ! -f "plugin.rb" ]; then
   exit 1
 fi
 
+# Copy these files from skeleton if they do not already exist
+cp -vn ../discourse-plugin-skeleton/.streerc . || true
+cp -vn ../discourse-plugin-skeleton/.rubocop.yml . || true
+cp -vn ../discourse-plugin-skeleton/Gemfile . || true
+
+# Add stree
 if ! grep -q 'syntax_tree' Gemfile; then
-  sed -i "" "s/gem 'rubocop-discourse'/gem 'rubocop-discourse'; gem 'syntax_tree'; gem 'syntax_tree-disable_ternary';/" Gemfile
+  sed -i "" "s/gem 'rubocop-discourse'/gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
   if ! grep -q 'syntax_tree' Gemfile; then
     echo "Unable to automatically install syntax tree. Please fix the Gemfile and restart the script;"
     exit 1
   fi
 fi
 
-if ! grep -q 'syntax_tree-disable_ternary' Gemfile; then
-  sed -i "" "s/gem \"syntax_tree\"/gem 'syntax_tree'; gem 'syntax_tree-disable_ternary';/" Gemfile
-  if ! grep -q 'syntax_tree-disable_ternary' Gemfile; then
-    echo "Unable to automatically install syntax_tree-disable_ternary. Please fix the Gemfile and restart the script;"
-    exit 1
-  fi
+# Remove the old stree plugin
+if grep -q 'syntax_tree-disable_ternary' Gemfile; then
+  out=$(awk '!/syntax_tree-disable_ternary/' Gemfile); echo $out > Gemfile
+  sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
-
+bundle lock --add-platform x86_64-linux
 bundle install
 bundle update syntax_tree
 bundle update rubocop-discourse
-
-bundle install
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 

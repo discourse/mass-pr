@@ -57,6 +57,12 @@ function log(...message) {
   console.log(`${green}[mass-pr]${reset}`, ...message);
 }
 
+function logError(...message) {
+  const red = "\x1b[31m";
+  const reset = "\x1b[0m";
+  console.error(`${red}[mass-pr]${reset}`, ...message);
+}
+
 function run(cmd, ...args) {
   let opts;
 
@@ -119,6 +125,9 @@ async function makePR({
       break;
     } catch (err) {
       log(`Script run failed for '${repository}'`);
+      if (err.code === "ENOENT") {
+        logError(`'${script}' doesn't exist`);
+      }
 
       if (!process.stdin.isTTY) {
         throw err;

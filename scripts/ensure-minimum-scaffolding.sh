@@ -13,23 +13,12 @@ REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
 
 if [ ! -f "repo/package.json" ]; then
   echo "{ \"name\": \"$REPO_NAME\", \"private\": true }" > repo/package.json
-  (cd repo && yarn add eslint-config-discourse --dev)
 fi
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "repo/plugin.rb" ]; then
-  cp -vn discourse-plugin-skeleton/.eslintrc repo || true
-  cp -vn discourse-plugin-skeleton/.prettierrc repo || true
   cp -vn discourse-plugin-skeleton/.gitignore repo || true
-  cp -vn discourse-plugin-skeleton/.streerc repo || true
-  cp -vn discourse-plugin-skeleton/.rubocop.yml repo || true
-  cp -vn discourse-plugin-skeleton/Gemfile repo || true
-  (cd repo && bundle)
-  (cd repo && bundle lock --add-platform x86_64-linux)
-  (cd repo && bundle exec rubocop .)
 else # Theme
-  cp -vn discourse-theme-skeleton/.eslintrc repo || true
-  cp -vn discourse-theme-skeleton/.prettierrc repo || true
   cp -vn discourse-theme-skeleton/.gitignore repo || true
 fi
 

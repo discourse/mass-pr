@@ -14,7 +14,7 @@ fi
 CURRENT_PLUGIN_MAIN_HASH=$(git rev-parse HEAD)
 
 if [ ! -f ".discourse-compatibility" ]; then
-  echo "" > .discourse-compatibility
+  touch .discourse-compatibility
 fi
 
 if grep -q "$CORE_VERSION" ".discourse-compatibility"; then
