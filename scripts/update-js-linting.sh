@@ -27,7 +27,7 @@ fi
 if [ -f "repo/plugin.rb" ]; then
   if grep -q 'transpile_js: true' plugin.rb; then
     ruby -e 'File.write("plugin.rb", File.read("plugin.rb").gsub(/^# transpile_js: true\n/, ""))'
-  end
+  fi
 fi
 
 # Use the current linting setup
