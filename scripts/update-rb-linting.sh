@@ -31,9 +31,7 @@ if grep -q 'syntax_tree-disable_ternary' Gemfile; then
 fi
 
 bundle lock --add-platform x86_64-linux
-bundle install
-bundle update syntax_tree
-bundle update rubocop-discourse
+bundle update
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 
