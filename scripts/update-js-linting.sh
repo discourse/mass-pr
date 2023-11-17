@@ -41,9 +41,9 @@ else # Theme
 fi
 
 if [ -f "plugin.rb" ]; then
-  yarn eslint --ext .js --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
+  yarn eslint --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
 else # Theme
-  yarn eslint --ext .js --no-error-on-unmatched-pattern {test,javascripts} || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
+  yarn eslint --no-error-on-unmatched-pattern {test,javascripts} || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
 fi
 
 if [ -f "plugin.rb" ]; then
