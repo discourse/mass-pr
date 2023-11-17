@@ -33,7 +33,7 @@ fi
 
 # Use the current linting setup
 yarn remove eslint-config-discourse || true
-yarn add --dev @discourse/lint-configs eslint prettier@^2.8.8 ember-template-lint
+yarn add --dev @discourse/lint-configs eslint@^8.51.0 prettier@^2.8.8 ember-template-lint
 
 if [ -f "plugin.rb" ]; then
   yarn prettier --write '{assets,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
