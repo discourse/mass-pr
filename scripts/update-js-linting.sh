@@ -9,9 +9,9 @@ cd repo
 find . -depth -name "*.js.es6" -exec sh -c 'mv "$1" "${1%.es6}"' _ {} \;
 
 # Remove the old config files
-rm .eslintrc
-rm .prettierrc
-rm .template-lintrc.js
+rm -f .eslintrc
+rm -f .prettierrc
+rm -f .template-lintrc.js
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "plugin.rb" ]; then
