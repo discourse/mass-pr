@@ -32,7 +32,7 @@ if [ -f "plugin.rb" ]; then
 fi
 
 # Use the current linting setup
-yarn remove eslint-config-discourse
+yarn remove eslint-config-discourse || true
 yarn add --dev @discourse/lint-configs eslint prettier@^2.8.8 ember-template-lint
 
 if [ -f "plugin.rb" ]; then
