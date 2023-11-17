@@ -13,7 +13,7 @@ rm .eslintrc
 rm .prettierrc
 
 # Copy these files from skeleton if they do not already exist
-if [ -f "repo/plugin.rb" ]; then
+if [ -f "plugin.rb" ]; then
   cp -vn ../discourse-plugin-skeleton/.eslintrc.cjs . || true
   cp -vn ../discourse-plugin-skeleton/.prettierrc.cjs . || true
   cp -vn ../discourse-plugin-skeleton/.template-lintrc.js . || true
@@ -24,7 +24,7 @@ else # Theme
 fi
 
 # Remove the old transpile_js option
-if [ -f "repo/plugin.rb" ]; then
+if [ -f "plugin.rb" ]; then
   if grep -q 'transpile_js: true' plugin.rb; then
     ruby -e 'File.write("plugin.rb", File.read("plugin.rb").gsub(/^# transpile_js: true\n/, ""))'
   fi
