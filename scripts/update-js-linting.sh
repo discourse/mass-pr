@@ -51,7 +51,7 @@ else # Theme
 fi
 
 if [ -f "plugin.rb" ]; then
-  yarn prettier --write '{assets,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
+  yarn prettier --write '{assets,admin/assets,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
 else # Theme
   yarn prettier --write '{javascripts,desktop,mobile,common,scss,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
 fi
