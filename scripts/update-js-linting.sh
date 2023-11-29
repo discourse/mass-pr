@@ -55,6 +55,13 @@ else # Theme
   yarn prettier --write '{javascripts,desktop,mobile,common,scss,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
 fi
 
+# Do an extra check after prettier
+if [ -f "plugin.rb" ]; then
+  yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
+else # Theme
+  yarn eslint --fix --no-error-on-unmatched-pattern {test,javascripts} || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
+fi
+
 cd ..
 
 ../scripts/update-workflows.sh
