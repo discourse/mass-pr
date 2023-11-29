@@ -7,7 +7,7 @@ cd repo
 
 if [ ! -f "plugin.rb" ]; then
   echo "Not a plugin, skipping ruby operations"
-  exit 1
+  exit 0
 fi
 
 # Copy these files from skeleton if they do not already exist
