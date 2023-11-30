@@ -32,6 +32,7 @@ fi
 
 bundle lock --add-platform x86_64-linux
 bundle lock --add-platform arm64-darwin-20
+bundle lock --add-platform arm64-darwin-22
 bundle update
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
