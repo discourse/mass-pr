@@ -17,7 +17,7 @@ cp -vn ../discourse-plugin-skeleton/Gemfile . || true
 
 # Add stree
 if ! grep -q 'syntax_tree' Gemfile; then
-  sed -i "" "s/gem 'rubocop-discourse'/gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
+  sed -i "" "s/gem .rubocop-discourse./gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
   if ! grep -q 'syntax_tree' Gemfile; then
     echo "Unable to automatically install syntax tree. Please fix the Gemfile and restart the script;"
     exit 1
