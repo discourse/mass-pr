@@ -134,22 +134,23 @@ async function makePR({
       }
 
       log(
-        `s to skip this repo, r to retry the script, p to make a PR anyway, any other key to exit`
+        `s to skip this repo, p to make a PR anyway, q to exit, r (or any other key) to retry the script`
       );
+
       const key = await waitForKeypress();
 
       if (key === "s") {
         log(`Skipping ${repository}`);
         return;
-      } else if (key === "r") {
-        log(`Retrying ${repository}`);
-        continue;
       } else if (key === "p") {
         log(`Making a PR anyway`);
         break;
-      } else {
+      } else if (key === "q") {
         log(`Exiting...`);
         exit(1);
+      } else {
+        log(`Retrying ${repository}`);
+        continue;
       }
     }
   }
