@@ -15,6 +15,8 @@ rm -f .prettierrc
 rm -f .prettierrc.js
 rm -f .template-lintrc.js
 
+rm -f package-lock.json
+
 # Copy these files from skeleton if they do not already exist
 if [ -f "plugin.rb" ]; then
   cp -vn ../discourse-plugin-skeleton/.eslintrc.cjs . || true
