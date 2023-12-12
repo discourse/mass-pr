@@ -37,7 +37,7 @@ fi
 
 # Use the current linting setup
 yarn remove eslint-config-discourse || true
-yarn add --dev @discourse/lint-configs eslint@^8.55.0 prettier@^2.8.8 ember-template-lint@^5.13.0
+yarn add --dev @discourse/lint-configs@^1.3.1 eslint@^8.55.0 prettier@^2.8.8 ember-template-lint@^5.13.0
 
 if [ -f "plugin.rb" ]; then
   yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
