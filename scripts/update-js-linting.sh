@@ -36,7 +36,9 @@ if [ -f "plugin.rb" ]; then
 fi
 
 # Use the current linting setup
-yarn remove eslint-config-discourse --silent || true
+if grep -q 'eslint-config-discourse' package.json; then
+  yarn remove eslint-config-discourse
+fi
 yarn add --dev @discourse/lint-configs@^1.3.1 eslint@^8.55.0 prettier@^2.8.8 ember-template-lint@^5.13.0
 
 if [ -f "plugin.rb" ]; then
