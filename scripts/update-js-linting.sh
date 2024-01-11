@@ -35,6 +35,9 @@ if [ -f "plugin.rb" ]; then
   fi
 fi
 
+# Fix i18n helper invocations
+grep -rl '{{I18n' **/*.hbs | xargs sed -i '' 's/{{I18n/{{i18n/g'
+
 # Use the current linting setup
 if grep -q 'eslint-config-discourse' package.json; then
   yarn remove eslint-config-discourse
