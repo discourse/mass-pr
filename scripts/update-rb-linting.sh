@@ -32,6 +32,14 @@ if grep -q ',disable_ternary' .streerc; then
   sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
+bundle lock --remove-platform x86_64-linux
+bundle lock --remove-platform x86_64-darwin-18
+bundle lock --remove-platform x86_64-darwin-19
+bundle lock --remove-platform x86_64-darwin-20
+bundle lock --remove-platform arm64-darwin-20
+bundle lock --remove-platform arm64-darwin-21
+bundle lock --remove-platform arm64-darwin-22
+
 bundle update --bundler
 bundle update
 
