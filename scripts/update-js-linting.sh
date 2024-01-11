@@ -45,7 +45,7 @@ grep -rl '@class=' **/*.{hbs,gjs} | xargs sed -i '' 's/@class=/class=/g'
 if grep -q 'eslint-config-discourse' package.json; then
   yarn remove eslint-config-discourse
 fi
-yarn add --dev @discourse/lint-configs@^1.3.1 eslint@^8.55.0 prettier@^2.8.8 ember-template-lint@^5.13.0
+yarn add --dev @discourse/lint-configs@^1.3.4 eslint@^8.56.0 prettier@^2.8.8 ember-template-lint@^5.13.0
 
 if [ -f "plugin.rb" ]; then
   yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
