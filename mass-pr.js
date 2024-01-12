@@ -218,7 +218,9 @@ async function makePR({
     const errorMessage = error.response?.data?.errors?.[0]?.message;
 
     if (errorMessage && /A pull request already exists/.test(errorMessage)) {
-      log(`✅ PR already exists for '${repository}'`);
+      log(
+        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+      );
     } else {
       console.error(error);
       throw `❓ Failed to create PR for '${repository}'`;
