@@ -205,7 +205,7 @@ async function makePR({
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
   try {
-    await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
       owner,
       repo: repoNoOwner,
       title: message,
@@ -213,7 +213,7 @@ async function makePR({
       base: defaultBranch,
       body,
     });
-    log(`✅ PR created for '${repository}'`);
+    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
   } catch (error) {
     const errorMessage = error.response?.data?.errors?.[0]?.message;
 
