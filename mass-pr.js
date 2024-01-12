@@ -171,8 +171,9 @@ async function makePR({
 
   if (ask) {
     log(`'${repository}' done`);
-    log(`Review result in ./${WORKSPACE_DIR}/repo. Press`);
-    log(`q to exit, or any other key to continue`);
+    log(
+      `Review result in ./${WORKSPACE_DIR}/repo. Press q to exit, or any other key to continue`
+    );
     const key = await waitForKeypress();
 
     if (key === "q") {
