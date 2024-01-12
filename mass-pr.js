@@ -96,6 +96,7 @@ async function makePR({
   message,
   mode,
   repository,
+  ask,
   dryRun,
 }) {
   const [owner, repoNoOwner] = repository.split("/");
@@ -164,7 +165,21 @@ async function makePR({
       }
     ).trim() !== "";
 
-  if (dryRun) {
+  if (!anyChanges) {
+    log(`✅ '${repository}' is already up to date`);
+  }
+
+  if (ask) {
+    log(`'${repository}' done`);
+    log(`Review result in ./${WORKSPACE_DIR}/repo. Press`);
+    log(`q to exit, or any other key to continue`);
+    const key = await waitForKeypress();
+
+    if (key === "q") {
+      log(`Exiting...`);
+      exit(1);
+    }
+  } else if (dryRun) {
     log(`[dry-run] '${repository}' done`);
     log(
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press n to try next repo. Any other key to quit.`
@@ -178,7 +193,6 @@ async function makePR({
   }
 
   if (!anyChanges) {
-    log(`✅ '${repository}' is already up to date`);
     return;
   }
 
@@ -255,9 +269,14 @@ yargs(hideBin(process.argv))
           default: "ssh",
           choices: ["ssh", "https"],
         })
+        .option("ask", {
+          type: "boolean",
+          default: false,
+          description: "Pause before pushing changes to GitHub",
+        })
         .option("dry-run", {
           type: "boolean",
-          description: "Stop before pushing changes to GitHub",
+          description: "Abort before pushing changes to GitHub",
         })
         .positional("repositories", {
           describe:
