@@ -32,6 +32,7 @@ if grep -q ',disable_ternary' .streerc; then
   sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
+bundle update
 bundle update --bundler
 
 bundle lock --add-platform ruby
@@ -42,8 +43,6 @@ bundle lock --remove-platform x86_64-darwin-20 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-20 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-21 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-22 &> /dev/null || true
-
-bundle update
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 
