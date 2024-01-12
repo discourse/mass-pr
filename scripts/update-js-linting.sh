@@ -42,10 +42,18 @@ find . -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
 find . -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/@class=/class=/g'
 
 # Use the current linting setup
-if grep -q 'eslint-config-discourse' package.json; then
-  yarn remove eslint-config-discourse
-fi
-yarn add --dev @discourse/lint-configs@^1.3.4 eslint@^8.56.0 prettier@^2.8.8 ember-template-lint@^5.13.0
+repo_name=$(git config --get remote.origin.url | grep -o '/\(.*\)' | cut -d'/' -f2)
+echo '{
+  "name": "'$repo_name'",
+  "private": true,
+  "devDependencies": {
+    "@discourse/lint-configs": "^1.3.4",
+    "ember-template-lint": "^5.13.0",
+    "eslint": "^8.56.0",
+    "prettier": "^2.8.8"
+  }
+}' > package.json
+yarn install
 
 if [ -f "plugin.rb" ]; then
   yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
