@@ -39,7 +39,7 @@ fi
 find . -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
 
 # Update all uses of `@class` argument
-if [ -n "$(find . -name '*.hbs' -o -name '*.gjs' | xargs grep '@class')" ]; then
+if [ -n "$(find . -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')" ]; then
   find . -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/@class=/class=/g'
   echo "[update-js-linting] Updated some '@class' args. Please review the changes."
   exit 1
