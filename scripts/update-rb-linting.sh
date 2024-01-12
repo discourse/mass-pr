@@ -32,6 +32,8 @@ if grep -q ',disable_ternary' .streerc; then
   sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
+sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
+
 bundle update
 bundle update --bundler
 
@@ -44,10 +46,11 @@ bundle lock --remove-platform arm64-darwin-20 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-21 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-22 &> /dev/null || true
 
-sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
+# Remove unnecessary requires
+find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_helper"//'
 
+# Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
-
 bundle exec rubocop -A . || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
 
 # Second stree run to format any rubocop auto-fixes
