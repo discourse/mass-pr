@@ -36,10 +36,10 @@ if [ -f "plugin.rb" ]; then
 fi
 
 # Fix i18n helper invocations
-grep -rl '{{I18n' **/*.hbs | xargs sed -i '' 's/{{I18n/{{i18n/g'
+find . -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
 
 # Update all uses of `@class` argument
-grep -rl '@class=' **/*.{hbs,gjs} | xargs sed -i '' 's/@class=/class=/g'
+find . -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/@class=/class=/g'
 
 # Use the current linting setup
 if grep -q 'eslint-config-discourse' package.json; then
