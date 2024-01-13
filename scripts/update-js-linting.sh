@@ -36,29 +36,29 @@ if [ -f "plugin.rb" ]; then
 fi
 
 # Fix i18n helper invocations
-find . -type f -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
+find . -type f -not -path './node_modules*' -a -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
 
 # Update all uses of `@class` argument
-if [ -n "$(find . -type f -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')" ]; then
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')" ]; then
   find . -type f -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/@class=/class=/g'
   echo "[update-js-linting] Updated some '@class' args. Please review the changes."
   exit 1
 fi
 
 # Find this.transitionToRoute (in lieu of the eslint-ember rule)
-if [ -n "$(find . -type f -name '*.js' -o -name '*.gjs' | xargs grep -E 'this\.(transitionTo|replaceWith|replaceRoute)')" ]; then
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep -E 'this\.(transitionTo|replaceWith|replaceRoute)')" ]; then
   echo "[update-js-linting] Found uses of deprecated transitionToRoute/transitionTo/replaceWith/replaceRoute. Please review the code."
   exit 1
 fi
 
 # Find deprecated lookups, like "site:main"
-if [ -n "$(find . -type f -name '*.js' | xargs grep ':main\"')" ]; then
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' | xargs grep ':main\"')" ]; then
   echo "[update-js-linting] Found uses of deprecated '*:main' lookups. Please review the code."
   exit 1
 fi
 
 # Find uses of deprecated DSection
-if [ -n "$(find . -type f -name '*.hbs' -o -name '*.gjs' | xargs grep -E '<DSection|{{#d-section')" ]; then
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep -E '<DSection|{{#d-section')" ]; then
   echo "[update-js-linting] Found uses of deprecated <DSection />/{{#d-section}}. Please review the code."
   exit 1
 fi
