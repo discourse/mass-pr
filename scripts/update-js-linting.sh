@@ -45,6 +45,12 @@ if [ -n "$(find . -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')" ]; the
   exit 1
 fi
 
+# Find uses of deprecated DSection
+if [ -n "$(find . -name '*.hbs' -o -name '*.gjs' | xargs grep -E '<DSection|{{#d-section')" ]; then
+  echo "[update-js-linting] Found uses of deprecated <DSection />/{{#d-section}}. Please review the code."
+  exit 1
+fi
+
 # Use the current linting setup
 repo_name=$(git config --get remote.origin.url | grep -o '/\(.*\)' | cut -d'/' -f2)
 echo '{
