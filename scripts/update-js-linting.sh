@@ -46,8 +46,8 @@ if [ -n "$(find . -type f -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')
 fi
 
 # Find this.transitionToRoute (in lieu of the eslint-ember rule)
-if [ -n "$(find . -type f -name '*.js' -o -name '*.gjs' | xargs grep 'this.transitionTo')" ]; then
-  echo "[update-js-linting] Found uses of deprecated this.transitionToRoute/this.transitionTo. Please review the code."
+if [ -n "$(find . -type f -name '*.js' -o -name '*.gjs' | xargs grep -E 'this\.(transitionTo|replaceWith|replaceRoute)')" ]; then
+  echo "[update-js-linting] Found uses of deprecated transitionToRoute/transitionTo/replaceWith/replaceRoute. Please review the code."
   exit 1
 fi
 
