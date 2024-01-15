@@ -28,6 +28,8 @@ else # Theme
   cp -vn ../discourse-theme-skeleton/.template-lintrc.cjs . || true
 fi
 
+yarn install
+
 # Remove the old transpile_js option
 if [ -f "plugin.rb" ]; then
   if grep -q 'transpile_js: true' plugin.rb; then
@@ -62,20 +64,6 @@ if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name
   echo "[update-js-linting] Found uses of deprecated <DSection />/{{#d-section}}. Please review the code."
   exit 1
 fi
-
-# Use the current linting setup
-REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
-echo '{
-  "name": "'$REPO_NAME'",
-  "private": true,
-  "devDependencies": {
-    "@discourse/lint-configs": "^1.3.5",
-    "ember-template-lint": "^5.13.0",
-    "eslint": "^8.56.0",
-    "prettier": "^2.8.8"
-  }
-}' > package.json
-yarn install
 
 if [ -f "plugin.rb" ]; then
   yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
