@@ -64,9 +64,9 @@ if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name
 fi
 
 # Use the current linting setup
-repo_name=$(git config --get remote.origin.url | grep -o '/\(.*\)' | cut -d'/' -f2)
+REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
 echo '{
-  "name": "'$repo_name'",
+  "name": "'$REPO_NAME'",
   "private": true,
   "devDependencies": {
     "@discourse/lint-configs": "^1.3.5",
