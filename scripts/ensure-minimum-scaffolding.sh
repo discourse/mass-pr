@@ -10,9 +10,7 @@ if [ ! -d "discourse-plugin-skeleton" ]; then
 fi
 
 # Use the current js linting setup
-REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
 echo '{
-  "name": "'$REPO_NAME'",
   "private": true,
   "devDependencies": {
     "@discourse/lint-configs": "^1.3.5",
