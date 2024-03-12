@@ -65,6 +65,12 @@ if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name
   exit 1
 fi
 
+# Find querySelector("body")
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep 'querySelector("body")')" ]; then
+  echo "[update-js-linting] Found uses of querySelector(\"body\"). Please review the code and replace it with \`.body\`."
+  exit 1
+fi
+
 if [ -f "plugin.rb" ]; then
   yarn eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
 else # Theme
