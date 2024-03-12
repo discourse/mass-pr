@@ -50,8 +50,7 @@ fi
 # Update all uses of `inject as service`
 if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep 'inject as service')" ]; then
   find . -type f -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/inject as service/service/g'
-  echo "[update-js-linting] Updated 'inject as service' imports. Please review the changes."
-  exit 1
+  echo "[update-js-linting] Updated 'inject as service' imports."
 fi
 
 # Find this.transitionToRoute (in lieu of the eslint-ember rule)
