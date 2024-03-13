@@ -30,6 +30,11 @@ fi
 
 yarn install
 
+# Move tests out of test/javascripts
+if [ -f "about.json" ]; then
+  mv test/javascripts/* test/
+fi
+
 # Remove the old transpile_js option
 if [ -f "plugin.rb" ]; then
   if grep -q 'transpile_js: true' plugin.rb; then
