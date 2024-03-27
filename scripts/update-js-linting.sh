@@ -31,7 +31,7 @@ fi
 yarn install
 
 # Move tests out of test/javascripts
-if [ -f "about.json" ]; then
+if [[ ! -f "plugin.rb" && -d "test/javascripts" ]]; then
   mv test/javascripts/* test/
 fi
 
@@ -53,8 +53,8 @@ if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name
 fi
 
 # Update all uses of `inject as service`
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep 'inject as service')" ]; then
-  find . -type f -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/inject as service/service/g'
+if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep 'inject as service')" ]; then
+  find . -type f -name "*.js" -o -name "*.gjs" | xargs sed -i '' 's/inject as service/service/g'
   echo "[update-js-linting] Updated 'inject as service' imports."
 fi
 
