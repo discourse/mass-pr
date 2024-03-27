@@ -57,6 +57,12 @@ function log(...message) {
   console.log(`${green}[mass-pr]${reset}`, ...message);
 }
 
+function logError(...message) {
+  const red = "\x1b[31m";
+  const reset = "\x1b[0m";
+  console.error(`${red}[mass-pr]${reset}`, ...message);
+}
+
 function run(cmd, ...args) {
   let opts;
 
@@ -90,6 +96,7 @@ async function makePR({
   message,
   mode,
   repository,
+  ask,
   dryRun,
 }) {
   const [owner, repoNoOwner] = repository.split("/");
@@ -119,28 +126,32 @@ async function makePR({
       break;
     } catch (err) {
       log(`Script run failed for '${repository}'`);
+      if (err.code === "ENOENT") {
+        logError(`'${script}' doesn't exist`);
+      }
 
       if (!process.stdin.isTTY) {
         throw err;
       }
 
       log(
-        `s to skip this repo, r to retry the script, p to make a PR anyway, any other key to exit`
+        `s to skip this repo, p to make a PR anyway, q to exit, r (or any other key) to retry the script`
       );
+
       const key = await waitForKeypress();
 
       if (key === "s") {
         log(`Skipping ${repository}`);
         return;
-      } else if (key === "r") {
-        log(`Retrying ${repository}`);
-        continue;
       } else if (key === "p") {
         log(`Making a PR anyway`);
         break;
-      } else {
+      } else if (key === "q") {
         log(`Exiting...`);
         exit(1);
+      } else {
+        log(`Retrying ${repository}`);
+        continue;
       }
     }
   }
@@ -154,7 +165,22 @@ async function makePR({
       }
     ).trim() !== "";
 
-  if (dryRun) {
+  if (!anyChanges) {
+    log(`✅ '${repository}' is already up to date`);
+  }
+
+  if (ask) {
+    log(`'${repository}' done`);
+    log(
+      `Review result in ./${WORKSPACE_DIR}/repo. Press q to exit, or any other key to continue`
+    );
+    const key = await waitForKeypress();
+
+    if (key === "q") {
+      log(`Exiting...`);
+      exit(1);
+    }
+  } else if (dryRun) {
     log(`[dry-run] '${repository}' done`);
     log(
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press n to try next repo. Any other key to quit.`
@@ -168,7 +194,6 @@ async function makePR({
   }
 
   if (!anyChanges) {
-    log(`✅ '${repository}' is already up to date`);
     return;
   }
 
@@ -180,7 +205,7 @@ async function makePR({
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
   try {
-    await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
       owner,
       repo: repoNoOwner,
       title: message,
@@ -188,12 +213,14 @@ async function makePR({
       base: defaultBranch,
       body,
     });
-    log(`✅ PR created for '${repository}'`);
+    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
   } catch (error) {
     const errorMessage = error.response?.data?.errors?.[0]?.message;
 
     if (errorMessage && /A pull request already exists/.test(errorMessage)) {
-      log(`✅ PR already exists for '${repository}'`);
+      log(
+        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+      );
     } else {
       console.error(error);
       throw `❓ Failed to create PR for '${repository}'`;
@@ -245,9 +272,14 @@ yargs(hideBin(process.argv))
           default: "ssh",
           choices: ["ssh", "https"],
         })
+        .option("ask", {
+          type: "boolean",
+          default: false,
+          description: "Pause before pushing changes to GitHub",
+        })
         .option("dry-run", {
           type: "boolean",
-          description: "Stop before pushing changes to GitHub",
+          description: "Abort before pushing changes to GitHub",
         })
         .positional("repositories", {
           describe:

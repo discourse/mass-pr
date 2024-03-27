@@ -9,27 +9,21 @@ if [ ! -d "discourse-plugin-skeleton" ]; then
   git clone --quiet --depth 1 https://github.com/discourse/discourse-plugin-skeleton discourse-plugin-skeleton
 fi
 
-REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
-
-if [ ! -f "repo/package.json" ]; then
-  echo "{ \"name\": \"$REPO_NAME\", \"private\": true }" > repo/package.json
-  (cd repo && yarn add eslint-config-discourse --dev)
-fi
+# Use the current js linting setup
+echo '{
+  "private": true,
+  "devDependencies": {
+    "@discourse/lint-configs": "^1.3.7",
+    "ember-template-lint": "^5.13.0",
+    "eslint": "^8.56.0",
+    "prettier": "^2.8.8"
+  }
+}' > repo/package.json
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "repo/plugin.rb" ]; then
-  cp -vn discourse-plugin-skeleton/.eslintrc repo || true
-  cp -vn discourse-plugin-skeleton/.prettierrc repo || true
   cp -vn discourse-plugin-skeleton/.gitignore repo || true
-  cp -vn discourse-plugin-skeleton/.streerc repo || true
-  cp -vn discourse-plugin-skeleton/.rubocop.yml repo || true
-  cp -vn discourse-plugin-skeleton/Gemfile repo || true
-  (cd repo && bundle)
-  (cd repo && bundle lock --add-platform x86_64-linux)
-  (cd repo && bundle exec rubocop .)
 else # Theme
-  cp -vn discourse-theme-skeleton/.eslintrc repo || true
-  cp -vn discourse-theme-skeleton/.prettierrc repo || true
   cp -vn discourse-theme-skeleton/.gitignore repo || true
 fi
 
