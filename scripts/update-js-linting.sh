@@ -31,7 +31,7 @@ fi
 yarn install
 
 # Move tests out of test/javascripts
-if [[ -f "about.json" && -d "test/javascripts"  ]]; then
+if [[ ! -f "plugin.rb" && -d "test/javascripts"  ]]; then
   mv test/javascripts/* test/
 fi
 
