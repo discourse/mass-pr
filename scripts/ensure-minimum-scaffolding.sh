@@ -13,10 +13,10 @@ fi
 echo '{
   "private": true,
   "devDependencies": {
-    "@discourse/lint-configs": "^1.3.7",
-    "ember-template-lint": "^5.13.0",
-    "eslint": "^8.56.0",
-    "prettier": "^2.8.8"
+    "@discourse/lint-configs": "1.3.9",
+    "ember-template-lint": "6.0.0",
+    "eslint": "8.57.0",
+    "prettier": "2.8.8"
   }
 }' > repo/package.json
 
