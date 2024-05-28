@@ -7,9 +7,9 @@ fi
 
 mkdir -p repo/.github/workflows
 if [ -f "repo/plugin.rb" ]; then
-  cp .github/plugin-workflow-templates/discourse-plugin.yml repo/.github/workflows
+  cp -vn .github/plugin-workflow-templates/discourse-plugin.yml repo/.github/workflows || true
 else
-  cp .github/theme-workflow-templates/discourse-theme.yml repo/.github/workflows
+  cp -vn .github/theme-workflow-templates/discourse-theme.yml repo/.github/workflows || true
 fi
 
 # Cleanup old workflows
