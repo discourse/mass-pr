@@ -51,6 +51,30 @@ jq '.engines = (.engines // {}) |
   "pnpm": ">= 9"
 }' package.json > temp.json && mv temp.json package.json
 
+if ! file_exists .pnpmfile.cjs; then
+  echo "Adding .pnpmfile hook to clean up yarn managed node_modules..."
+  cat << 'EOF' > .pnpmfile.cjs
+const fs = require("fs");
+const { execSync } = require("child_process");
+
+const currRoot = __dirname;
+
+if (fs.existsSync(`${currRoot}/node_modules/.yarn-integrity`)) {
+  console.log(
+    "Detected yarn-managed node_modules. Performing one-time cleanup..."
+  );
+
+  // Delete entire contents of all node_modules directories
+  // But keep the directories themselves, in case they are volume mounts (e.g. in devcontainer)
+  execSync(
+    `find ${currRoot}/node_modules -mindepth 1 -maxdepth 1 -exec rm -rf {} +`
+  );
+
+  console.log("cleanup done");
+}
+EOF
+fi
+
 echo "Installing dependencies with pnpm..."
 pnpm install
 
