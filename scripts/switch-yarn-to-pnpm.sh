@@ -75,6 +75,11 @@ if (fs.existsSync(`${currRoot}/node_modules/.yarn-integrity`)) {
 EOF
 fi
 
+if ! file_exists .npmrc; then
+  echo "Creating .npmrc..."
+  echo -e "engine-strict = true\nauto-install-peers = false" > .npmrc
+fi
+
 echo "Installing dependencies with pnpm..."
 pnpm install
 
