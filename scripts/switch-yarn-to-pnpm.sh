@@ -34,6 +34,11 @@ if file_exists yarn.lock; then
 	rm yarn.lock
 fi
 
+if file_exists package-lock.json; then
+	echo "Removing package-lock.json..."
+	rm package-lock.json
+fi
+
 echo "Replacing 'yarn' with 'pnpm' in package.json scripts..."
 jq 'if has("scripts") then .scripts |= with_entries(.value |= gsub("yarn "; "pnpm ")) else . end' package.json > temp.json && mv temp.json package.json
 
