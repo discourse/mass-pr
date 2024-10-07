@@ -67,4 +67,9 @@ for file in README.md README; do
   fi
 done
 
+if [ -d ".husky" ]; then
+  echo "Replacing 'yarn' with 'pnpm' in .husky directory..."
+  find .husky -type f -exec sed -i '' 's/yarn/pnpm/g' {} +
+fi
+
 echo "Conversion complete!"
