@@ -42,6 +42,16 @@ fi
 echo "Replacing 'yarn' with 'pnpm' in package.json scripts..."
 jq 'if has("scripts") then .scripts |= with_entries(.value |= gsub("yarn "; "pnpm ")) else . end' package.json > temp.json && mv temp.json package.json
 
+echo "Updating devDependencies clause in package.json..."
+jq '.devDependencies = (.devDependencies // {}) |
+  .devDependencies *= {
+  "@babel/plugin-proposal-decorators": "^7.25.7",
+  "@discourse/lint-configs": "1.3.9",
+  "ember-template-lint": "6.0.0",
+  "eslint": "8.57.0",
+  "prettier": "2.8.8"
+}' package.json > temp.json && mv temp.json package.json
+
 echo "Updating engines clause in package.json..."
 jq '.engines = (.engines // {}) |
   .engines *= {
