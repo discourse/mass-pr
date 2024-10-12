@@ -22,12 +22,12 @@ Scripts will be launched in the `mass-pr-workspace` directory, with the reposito
 directory will persist for the entire `mass-pr` run, so it can be used to cache things which may be useful for multiple repositories (e.g. skeleton
 repositories).
 
-For detailed usage instructions, run `yarn mass-pr --help`.
+For detailed usage instructions, run `pnpm mass-pr --help`.
 
 For example, to run `update-workflows.sh` for the `discourse-solved` and `discourse-assign` plugins, you would run:
 
 ```bash
-GITHUB_TOKEN=... yarn mass-pr \
+GITHUB_TOKEN=... pnpm mass-pr \
   --message "DEV: Update GitHub workflows" \
   --branch "update-ci" \
   --script scripts/update-workflows.sh \
@@ -38,7 +38,7 @@ GITHUB_TOKEN=... yarn mass-pr \
 To load the list of plugins from a text file, you could use something like:
 
 ```bash
-GITHUB_TOKEN=... yarn mass-pr \
+GITHUB_TOKEN=... pnpm mass-pr \
   --message "DEV: Update GitHub workflows" \
   --branch "update-ci" \
   --script scripts/update-workflows.sh \
