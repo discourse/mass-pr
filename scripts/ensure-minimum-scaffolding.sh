@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euxo pipefail
 
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 if [ ! -d "discourse-theme-skeleton" ]; then
   git clone --quiet --depth 1 https://github.com/discourse/discourse-theme-skeleton discourse-theme-skeleton
 fi
