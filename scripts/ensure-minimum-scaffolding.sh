@@ -36,7 +36,7 @@ jq '.private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
     "@babel/plugin-proposal-decorators": "^7.25.7",
-    "@discourse/lint-configs": "1.3.10",
+    "@discourse/lint-configs": "1.4.2",
     "ember-template-lint": "6.0.0",
     "eslint": "8.57.1",
     "prettier": "2.8.8"
