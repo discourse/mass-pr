@@ -5,15 +5,16 @@ set -euxo pipefail
 
 cd repo
 
-if [ ! -f "plugin.rb" ]; then
-  echo "Not a plugin, skipping ruby operations"
-  exit 0
-fi
-
 # Copy these files from skeleton if they do not already exist
-cp -vn ../discourse-plugin-skeleton/.streerc . || true
-cp -vn ../discourse-plugin-skeleton/.rubocop.yml . || true
-cp -vn ../discourse-plugin-skeleton/Gemfile . || true
+if [ -f "plugin.rb" ]; then
+  cp -vn ../discourse-plugin-skeleton/.streerc . || true
+  cp -vn ../discourse-plugin-skeleton/.rubocop.yml . || true
+  cp -vn ../discourse-plugin-skeleton/Gemfile . || true
+else # Theme
+  cp -vn ../discourse-theme-skeleton/.streerc . || true
+  cp -vn ../discourse-theme-skeleton/.rubocop.yml . || true
+  cp -vn ../discourse-theme-skeleton/Gemfile . || true
+fi
 
 # Add stree
 if ! grep -q 'syntax_tree' Gemfile; then
