@@ -45,4 +45,7 @@ GITHUB_TOKEN=... pnpm mass-pr \
   $(cat plugin-list.txt)
 ```
 
+> To create a GITHUB_TOKEN, follow this [guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
+> Make sure this token can create PRs in the repositories you want to update.
+
 Once the PRs have been created, you may be interested in the [mass-merge](https://github.com/discourse/mass-merge) tool.
