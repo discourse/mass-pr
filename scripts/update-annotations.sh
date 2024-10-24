@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+LOAD_PLUGINS=1
+
 cd repo
 
 if [ ! -f "plugin.rb" ]; then
@@ -10,14 +12,19 @@ fi
 
 cd ../
 
-echo "cloning discourse core"
 if [ ! -d "discourse" ]; then
+  echo "cloning discourse core"
   git clone --quiet --depth 1 https://github.com/discourse/discourse.git discourse
 fi
 
 cd discourse
 
-ln -s ../repo plugins
 
-# TODO: Maybe use annotate:clean:plugins[name]
+echo "symlink"
+rm -rf plugins/repo
+ln -s ../../repo plugins/repo
+
+bundle install
+pnpm install
+
 rake annotate:clean:plugins
