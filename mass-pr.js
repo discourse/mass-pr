@@ -283,7 +283,7 @@ yargs(hideBin(process.argv))
         })
         .positional("repositories", {
           describe:
-            "A list of GitHub repositories to loop over. {organisation}/{repo}",
+            "A list of GitHub repositories to loop over. {organization}/{repo}",
           array: true,
         });
     },
