@@ -14,16 +14,17 @@ rm -f .eslintrc.js
 rm -f .prettierrc
 rm -f .prettierrc.js
 rm -f .template-lintrc.js
+rm -f .eslintrc.cjs
 
 rm -f package-lock.json
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "plugin.rb" ]; then
-  cp -vn ../discourse-plugin-skeleton/.eslintrc.cjs . || true
+  cp -vn ../discourse-plugin-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-plugin-skeleton/.prettierrc.cjs . || true
   cp -vn ../discourse-plugin-skeleton/.template-lintrc.cjs . || true
 else # Theme
-  cp -vn ../discourse-theme-skeleton/.eslintrc.cjs . || true
+  cp -vn ../discourse-theme-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-theme-skeleton/.prettierrc.cjs . || true
   cp -vn ../discourse-theme-skeleton/.template-lintrc.cjs . || true
 fi
