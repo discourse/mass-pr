@@ -35,12 +35,13 @@ echo "Updating linting dependencies setup in package.json..."
 jq '.private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@babel/plugin-proposal-decorators": "^7.25.7",
-    "@discourse/lint-configs": "1.4.2",
+    "@discourse/lint-configs": "2.1.0",
     "ember-template-lint": "6.0.0",
-    "eslint": "8.57.1",
-    "prettier": "2.8.8"
-}' repo/package.json > repo/temp.json && mv repo/temp.json repo/package.json
+    "eslint": "9.14.0",
+    "prettier": "2.8.8",
+  } |
+  del(.devDependencies["@babel/plugin-proposal-decorators"])
+' repo/package.json > repo/temp.json && mv repo/temp.json repo/package.json
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "repo/plugin.rb" ]; then

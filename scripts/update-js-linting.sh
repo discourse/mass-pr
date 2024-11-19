@@ -14,21 +14,27 @@ rm -f .eslintrc.js
 rm -f .prettierrc
 rm -f .prettierrc.js
 rm -f .template-lintrc.js
+rm -f .eslintrc.cjs
 
 rm -f package-lock.json
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "plugin.rb" ]; then
-  cp -vn ../discourse-plugin-skeleton/.eslintrc.cjs . || true
+  cp -vn ../discourse-plugin-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-plugin-skeleton/.prettierrc.cjs . || true
   cp -vn ../discourse-plugin-skeleton/.template-lintrc.cjs . || true
 else # Theme
-  cp -vn ../discourse-theme-skeleton/.eslintrc.cjs . || true
+  cp -vn ../discourse-theme-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-theme-skeleton/.prettierrc.cjs . || true
   cp -vn ../discourse-theme-skeleton/.template-lintrc.cjs . || true
 fi
 
-pnpm install
+if git diff --quiet package.json; then
+  pnpm install
+else
+  # If package.json has changed, update all dependencies
+  pnpm update
+fi
 
 # Move tests out of test/javascripts
 if [[ ! -f "plugin.rb" && -d "test/javascripts" ]]; then
@@ -44,49 +50,6 @@ fi
 
 # Fix i18n helper invocations
 find . -type f -not -path './node_modules*' -a -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
-
-# Update all uses of `@class` argument
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep '@class=')" ]; then
-  find . -type f -name "*.hbs" -o -name "*.gjs" | xargs sed -i '' 's/@class=/class=/g'
-  echo "[update-js-linting] Updated some '@class' args. Please review the changes."
-  exit 1
-fi
-
-# Update all uses of `inject as service`
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep 'inject as service')" ]; then
-  find . -type f -name "*.js" -o -name "*.gjs" | xargs sed -i '' 's/inject as service/service/g'
-  echo "[update-js-linting] Updated 'inject as service' imports."
-fi
-
-# Find this.transitionToRoute (in lieu of the eslint-ember rule)
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep -E 'this\.(transitionTo|replaceWith|replaceRoute)')" ]; then
-  echo "[update-js-linting] Found uses of deprecated transitionToRoute/transitionTo/replaceWith/replaceRoute. Please review the code."
-  exit 1
-fi
-
-# Find deprecated lookups, like "site:main"
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' | xargs grep ':main\"')" ]; then
-  echo "[update-js-linting] Found uses of deprecated '*:main' lookups. Please review the code."
-  exit 1
-fi
-
-# Find uses of deprecated DSection
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.hbs' -o -name '*.gjs' | xargs grep -E '<DSection|{{#d-section')" ]; then
-  echo "[update-js-linting] Found uses of deprecated <DSection />/{{#d-section}}. Please review the code."
-  exit 1
-fi
-
-# Find querySelector("body")
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep 'querySelector("body")')" ]; then
-  echo "[update-js-linting] Found uses of querySelector(\"body\"). Please review the code and replace it with \`.body\`."
-  exit 1
-fi
-
-# Find querySelector("html")
-if [ -n "$(find . -type f -not -path './node_modules*' -a -name '*.js' -o -name '*.gjs' | xargs grep 'querySelector("html")')" ]; then
-  echo "[update-js-linting] Found uses of querySelector(\"html\"). Please review the code and replace it with \`.documentElement\`."
-  exit 1
-fi
 
 if [ -f "plugin.rb" ]; then
   pnpm eslint --fix --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
