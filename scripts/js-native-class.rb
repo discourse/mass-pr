@@ -40,7 +40,7 @@ else
   Dir["{test,javascripts}/**/*.js"]
 end
 
-if files.empty? && files.none? { |f| File.read(f).includes(".extend") }
+if files.empty? || files.none? { |f| File.read(f).includes(".extend") }
   puts "No files to transform"
   exit 0
 end
