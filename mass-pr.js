@@ -69,8 +69,11 @@ function run(cmd, ...args) {
   if (typeof args[args.length - 1] === "object") {
     opts = args.pop();
   }
-
-  execFileSync(cmd, args, { stdio: "inherit", ...opts });
+  if (cmd.endsWith(".rb")) {
+    execFileSync("ruby", [cmd, ...args], { stdio: "inherit", ...opts})
+  } else {
+    execFileSync(cmd, args, { stdio: "inherit", ...opts });
+  }
 }
 
 function runInRepo(cmd, ...args) {
