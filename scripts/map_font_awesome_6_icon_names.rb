@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
-require 'find'
+require "find"
 
 FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP = {
   /plugin\.rb$/ => [/register_svg_icon\s+"([^"]+)"/],
-  /\.hbs$/ => [
-    /{{d-icon\s+"([^"]+)"}}/
-  ],
+  /\.hbs$/ => [/{{d-icon\s+"([^"]+)"}}/, /{{dIcon\s+"([^"]+)"}}/],
   /\.gjs$/ => [
     /{{dIcon\s+"([^"]+)"}}/,
     /{{icon\s+"([^"]+)"}}/,
-  ],
-  /\.js$/ => [
     /iconNode\("([^"]+)"\)/,
     /iconHTML\("([^"]+)"\)/
   ],
+  /\.js$/ => [/iconNode\("([^"]+)"\)/, /iconHTML\("([^"]+)"\)/]
 }
+
+# Source of truth: https://github.com/discourse/discourse/blob/435fbb74082e1d060f97267a62dfa29c73979127/lib/svg_sprite.rb#L563
 FA5_REMAPS = {
   "adjust" => "circle-half-stroke",
   "air-freshener" => "spray-can-sparkles",
@@ -692,8 +691,11 @@ FA5_REMAPS = {
   "wifi-2" => "wifi-fair",
   "window-alt" => "window-flip",
   "window-close" => "rectangle-xmark",
-  "wine-glass-alt" => "wine-glass-empty",
+  "wine-glass-alt" => "wine-glass-empty"
 }
+
+DISCOURSE_COMPATIBILITY_FILE = ".discourse-compatibility"
+FA6_UPGRADE_DISCOURSE_VERSION = "3.4.0.beta2-dev"
 
 def remap_icon_name(icon_name)
   prefix = nil
@@ -721,10 +723,12 @@ def remap_icon_name(icon_name)
 
   new_icon_name = FA5_REMAPS[lookup_name] || lookup_name
   new_icon_name = "#{prefix}-#{new_icon_name}" if prefix
-  new_icon_name
+
+  [new_icon_name, FA5_REMAPS.key?(lookup_name)]
 end
 
 def process_file(file_path, replacement_patterns)
+  should_update_compat = false
   content = File.read(file_path)
 
   # Replace each line that matches any pattern with the remapped icon name
@@ -732,29 +736,52 @@ def process_file(file_path, replacement_patterns)
   replacement_patterns.each do |pattern|
     new_content.gsub!(pattern) do |match|
       original_icon = match.match(/"([^"]+)"/)[1]
-      puts "FOUND ORIGINAL ICON: #{original_icon}"
-      new_icon = remap_icon_name(original_icon)
+      puts "Found original icon: #{original_icon}"
+      new_icon, has_FA5_icon_name = remap_icon_name(original_icon)
+      "Mapped to new icon: #{new_icon}"
+      should_update_compat ||= has_FA5_icon_name
       match.sub(original_icon, new_icon)
     end
   end
 
-  # Write the changes back to the file only if there are changes
   if content != new_content
     puts "Writing to #{file_path}"
     File.write(file_path, new_content)
   end
+
+  should_update_compat
 end
 
-# Find and process each relevant file in the target directory
+### Script begins here
+Dir.chdir("repo")
+
+if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
+  raise "No discourse-compatibility file found"
+end
+
+should_update_compat = false
+
 Find.find(".") do |path|
   next unless File.file?(path)
 
   FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP.each do |file_matcher, replacement_patterns|
     if path.match?(file_matcher)
       puts "Processing #{path}"
-      process_file(path, replacement_patterns)
+      should_update_compat_result = process_file(path, replacement_patterns)
+      should_update_compat ||= should_update_compat_result
     end
   end
 end
 
 puts "Icon remapping completed."
+
+if should_update_compat
+  puts "Updating discourse-compatibility"
+  latest_commit_hash = `git rev-parse origin/main`.strip
+  content = File.read(DISCOURSE_COMPATIBILITY_FILE)
+  File.write(
+    DISCOURSE_COMPATIBILITY_FILE,
+    "< #{FA6_UPGRADE_DISCOURSE_VERSION}: #{latest_commit_hash}\n#{content}"
+  )
+  puts "discourse-compatibility updated"
+end

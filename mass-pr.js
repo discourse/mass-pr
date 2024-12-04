@@ -145,6 +145,8 @@ async function makePR({
 
       if (key === "s") {
         log(`Skipping ${repository}`);
+        await fs.mkdir("tmp", { recursive: true })
+          .then(() => fs.appendFile("tmp/skipped_repos.txt", `${repository}\n`));
         return;
       } else if (key === "p") {
         log(`Making a PR anyway`);
