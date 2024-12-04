@@ -5,6 +5,7 @@ require "find"
 FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP = {
   /plugin\.rb$/ => [/register_svg_icon\s+"([^"]+)"/],
   /\.hbs$/ => [/{{d-icon\s+"([^"]+)"}}/, /{{dIcon\s+"([^"]+)"}}/],
+  /\.hbr$/ => [/{{d-icon\s+"([^"]+)"}}/],
   /\.gjs$/ => [
     /{{dIcon\s+"([^"]+)"}}/,
     /{{icon\s+"([^"]+)"}}/,
