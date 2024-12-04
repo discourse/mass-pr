@@ -13,6 +13,7 @@ import { hideBin } from "yargs/helpers";
 const RETRY_COUNT = 20;
 const DELAY = 5 * 60;
 const WORKSPACE_DIR = "mass-pr-workspace";
+const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
@@ -145,7 +146,7 @@ async function makePR({
 
       if (key === "s") {
         log(`Skipping ${repository}`);
-        await fs.appendFile(`./${WORKSPACE_DIR}/skipped_repos.txt`, `${repository}\n`);
+        await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
         return;
       } else if (key === "p") {
         log(`Making a PR anyway`);
@@ -237,6 +238,12 @@ async function massPR(args) {
   await fs.mkdir(`./${WORKSPACE_DIR}`);
   for (const repository of args.repositories) {
     await makePR({ ...args, repository });
+  }
+  try {
+    await fs.access(`./${SKIPPED_REPOS_PATH}`);
+  } catch {
+    // no skipped repos so we can proceed to clean up
+    await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   }
   log("Complete 🚀");
   exit(0);
