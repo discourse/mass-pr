@@ -755,7 +755,6 @@ end
 ### Script begins here
 Dir.chdir("repo")
 
-
 should_update_compat = false
 
 Find.find(".") do |path|
@@ -772,14 +771,27 @@ end
 puts "Icon remapping completed."
 
 if should_update_compat
-  raise "No discourse-compatibility file found" if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
+  if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
+    raise "No discourse-compatibility file found"
+  end
 
-  puts "Updating discourse-compatibility"
-  latest_commit_hash = `git rev-parse origin/main`.strip
   content = File.read(DISCOURSE_COMPATIBILITY_FILE)
-  File.write(
-    DISCOURSE_COMPATIBILITY_FILE,
-    "< #{FA6_UPGRADE_DISCOURSE_VERSION}: #{latest_commit_hash}\n#{content}"
-  )
-  puts "discourse-compatibility updated"
+  lines = content.split("\n")
+  should_prepend =
+    lines.none? do |line|
+      version = line.match(/<?\s*([^:]+):/)[1].strip
+      Gem::Version.new(version) >=
+        Gem::Version.new(FA6_UPGRADE_DISCOURSE_VERSION)
+    end
+
+  # Prepend the new entry if the condition is met
+  if should_prepend
+    latest_commit_hash = `git rev-parse origin/main`.strip
+
+    File.write(
+      DISCOURSE_COMPATIBILITY_FILE,
+      "< #{FA6_UPGRADE_DISCOURSE_VERSION}: #{latest_commit_hash}\n#{content}"
+    )
+    puts "Updating discourse-compatibility"
+  end
 end
