@@ -755,9 +755,6 @@ end
 ### Script begins here
 Dir.chdir("repo")
 
-if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
-  raise "No discourse-compatibility file found"
-end
 
 should_update_compat = false
 
@@ -766,7 +763,6 @@ Find.find(".") do |path|
 
   FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP.each do |file_matcher, replacement_patterns|
     if path.match?(file_matcher)
-      puts "Processing #{path}"
       should_update_compat_result = process_file(path, replacement_patterns)
       should_update_compat ||= should_update_compat_result
     end
@@ -776,6 +772,8 @@ end
 puts "Icon remapping completed."
 
 if should_update_compat
+  raise "No discourse-compatibility file found" if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
+
   puts "Updating discourse-compatibility"
   latest_commit_hash = `git rev-parse origin/main`.strip
   content = File.read(DISCOURSE_COMPATIBILITY_FILE)
