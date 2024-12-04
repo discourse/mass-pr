@@ -145,8 +145,7 @@ async function makePR({
 
       if (key === "s") {
         log(`Skipping ${repository}`);
-        await fs.mkdir("tmp", { recursive: true })
-          .then(() => fs.appendFile("tmp/skipped_repos.txt", `${repository}\n`));
+        await fs.appendFile(`./${WORKSPACE_DIR}/skipped_repos.txt`, `${repository}\n`);
         return;
       } else if (key === "p") {
         log(`Making a PR anyway`);
@@ -239,7 +238,6 @@ async function massPR(args) {
   for (const repository of args.repositories) {
     await makePR({ ...args, repository });
   }
-  await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   log("Complete 🚀");
   exit(0);
 }
