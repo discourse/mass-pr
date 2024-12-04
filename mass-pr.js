@@ -13,6 +13,7 @@ import { hideBin } from "yargs/helpers";
 const RETRY_COUNT = 20;
 const DELAY = 5 * 60;
 const WORKSPACE_DIR = "mass-pr-workspace";
+const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
@@ -69,8 +70,11 @@ function run(cmd, ...args) {
   if (typeof args[args.length - 1] === "object") {
     opts = args.pop();
   }
-
-  execFileSync(cmd, args, { stdio: "inherit", ...opts });
+  if (cmd.endsWith(".rb")) {
+    execFileSync("ruby", [cmd, ...args], { stdio: "inherit", ...opts})
+  } else {
+    execFileSync(cmd, args, { stdio: "inherit", ...opts });
+  }
 }
 
 function runInRepo(cmd, ...args) {
@@ -142,6 +146,7 @@ async function makePR({
 
       if (key === "s") {
         log(`Skipping ${repository}`);
+        await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
         return;
       } else if (key === "p") {
         log(`Making a PR anyway`);
@@ -234,7 +239,12 @@ async function massPR(args) {
   for (const repository of args.repositories) {
     await makePR({ ...args, repository });
   }
-  await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
+  try {
+    await fs.access(`./${SKIPPED_REPOS_PATH}`);
+  } catch {
+    // no skipped repos so we can proceed to clean up
+    await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
+  }
   log("Complete 🚀");
   exit(0);
 }
