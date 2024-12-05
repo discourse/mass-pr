@@ -4,15 +4,28 @@ require "find"
 
 FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP = {
   /plugin\.rb$/ => [/register_svg_icon\s+"([^"]+)"/],
-  /\.hbs$/ => [/{{d-icon\s+"([^"]+)"}}/, /{{dIcon\s+"([^"]+)"}}/],
+  /\.hbs$/ => [
+    /{{d-icon\s+"([^"]+)"}}/,
+    /{{dIcon\s+"([^"]+)"}}/,
+    /@icon="([^"]+)"/,
+  ],
   /\.hbr$/ => [/{{d-icon\s+"([^"]+)"}}/],
   /\.gjs$/ => [
     /{{dIcon\s+"([^"]+)"}}/,
     /{{icon\s+"([^"]+)"}}/,
     /iconNode\("([^"]+)"\)/,
-    /iconHTML\("([^"]+)"\)/
+    /iconHTML\("([^"]+)"\)/,
+    /@icon="([^"]+)"/,
+    /replaceIcon\("([^"]+)".+/,
   ],
-  /\.js$/ => [/iconNode\("([^"]+)"\)/, /iconHTML\("([^"]+)"\)/]
+  /\.js$/ => [
+    /iconNode\("([^"]+)"\)/,
+    /iconHTML\("([^"]+)"\)/,
+    /replaceIcon\("([^"]+)",.*"([^"]+)"\)/,
+  ],
+  /\.html$/ => [
+    /replaceIcon\('([^']+)',.*'([^']+)'\)/,
+  ],
 }
 
 # Source of truth: https://github.com/discourse/discourse/blob/435fbb74082e1d060f97267a62dfa29c73979127/lib/svg_sprite.rb#L563
@@ -736,12 +749,16 @@ def process_file(file_path, replacement_patterns)
   new_content = content.dup
   replacement_patterns.each do |pattern|
     new_content.gsub!(pattern) do |match|
-      original_icon = match.match(/"([^"]+)"/)[1]
-      puts "Found original icon: #{original_icon}"
-      new_icon, has_FA5_icon_name = remap_icon_name(original_icon)
-      "Mapped to new icon: #{new_icon}"
-      should_update_compat ||= has_FA5_icon_name
-      match.sub(original_icon, new_icon)
+      original_icons = match.scan(/"([^"]+)"/).flatten
+      original_icons = match.scan(/'([^']+)'/).flatten if original_icons.empty?
+      puts "Found original icons: #{original_icons.join(', ')}"
+      original_icons.each do |icon|
+        new_icon, has_FA5_icon_name = remap_icon_name(icon)
+        puts "Mapped #{icon} to new icon: #{new_icon}"
+        should_update_compat ||= has_FA5_icon_name
+        match.sub!(icon, new_icon)
+      end
+      match
     end
   end
 
