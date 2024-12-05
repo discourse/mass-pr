@@ -754,7 +754,7 @@ def process_file(file_path, replacement_patterns)
       puts "Found original icons: #{original_icons.join(', ')}"
       original_icons.each do |icon|
         new_icon, has_FA5_icon_name = remap_icon_name(icon)
-        puts "Mapped #{icon} to new icon: #{new_icon}"
+        puts "Mapped #{icon} to new icon: #{new_icon}" if icon != new_icon
         should_update_compat ||= has_FA5_icon_name
         match.sub!(icon, new_icon)
       end
