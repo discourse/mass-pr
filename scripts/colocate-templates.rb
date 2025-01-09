@@ -15,14 +15,14 @@ def weird_js_path(component)
   Dir.glob("./**/components/#{component}.js")&.first
 end
 
-Dir.glob("**/discourse/templates/components/**/*.hbs").each do |template_path|
+Dir.glob("**/{discourse,admin}/templates/components/**/*.hbs").each do |template_path|
   component_name = template_path[/\/templates\/components\/(.+)\.hbs$/, 1]
   if is_core_override(component_name)
     puts "Skipping core override #{component_name}"
     next
   end
 
-  destination = template_path.sub("/discourse/templates/components/", "/discourse/components/")
+  destination = template_path.sub("/templates/components/", "/components/")
   expected_js_path = destination.sub(/\.hbs$/, ".js")
   
   puts "Moving #{template_path} to #{destination}"
