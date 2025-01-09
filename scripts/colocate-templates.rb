@@ -17,7 +17,7 @@ end
 
 def any_imports_of(component)
   Dir.glob("./**/*.{js,gjs}").any? do |path|
-    File.read(path).include?("components/#{component}")
+    File.read(path).include?("/#{component}")
   end
 end
 
