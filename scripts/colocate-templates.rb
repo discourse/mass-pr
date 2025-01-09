@@ -11,6 +11,10 @@ def is_core_override(component)
   Dir.glob("../core/**/components/#{component}.{hbs,js,gjs}").any?
 end
 
+def weird_js_path(component)
+  Dir.glob("./**/components/#{component}.js")&.first
+end
+
 Dir.glob("**/discourse/templates/components/**/*.hbs").each do |template_path|
   component_name = template_path[/\/templates\/components\/(.+)\.hbs$/, 1]
   if is_core_override(component_name)
@@ -26,11 +30,16 @@ Dir.glob("**/discourse/templates/components/**/*.hbs").each do |template_path|
   FileUtils.mv(template_path, destination)
 
   if !File.exist?(expected_js_path)
-    puts "Creating #{expected_js_path}"
-    File.write(expected_js_path, <<~JS)
-      import Component from "@ember/component";
-      export default class extends Component {}
-    JS
+    if path = weird_js_path(component_name)
+      puts "Moving #{path} to #{expected_js_path}..."
+      FileUtils.mv(path, expected_js_path)
+    else
+      puts "Creating #{expected_js_path}"
+      File.write(expected_js_path, <<~JS)
+        import Component from "@ember/component";
+        export default class extends Component {}
+      JS
+    end
   end
 end
 
