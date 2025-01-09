@@ -15,6 +15,12 @@ def weird_js_path(component)
   Dir.glob("./**/components/#{component}.js")&.first
 end
 
+def any_imports_of(component)
+  Dir.glob("./**/*.{js,gjs}").any? do |path|
+    File.read(path).include?("components/#{component}")
+  end
+end
+
 Dir.glob("**/{discourse,admin}/templates/components/**/*.hbs").each do |template_path|
   component_name = template_path[/\/templates\/components\/(.+)\.hbs$/, 1]
   if is_core_override(component_name)
@@ -31,6 +37,9 @@ Dir.glob("**/{discourse,admin}/templates/components/**/*.hbs").each do |template
 
   if !File.exist?(expected_js_path)
     if path = weird_js_path(component_name)
+      if any_imports_of(component_name)
+        raise "Help! A component is in a weird place, and it's being imported!"
+      end
       puts "Moving #{path} to #{expected_js_path}..."
       FileUtils.mv(path, expected_js_path)
     else
