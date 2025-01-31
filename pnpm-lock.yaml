@@ -26,7 +26,7 @@ importers:
     devDependencies:
       '@discourse/lint-configs':
         specifier: 2.3.1
-        version: 2.3.1(ember-template-lint@6.0.0)(eslint@9.19.0)(prettier@2.8.8)
+        version: 2.3.1(ember-template-lint@6.1.0)(eslint@9.19.0)(prettier@2.8.8)
       eslint:
         specifier: 9.19.0
         version: 9.19.0
@@ -733,9 +733,9 @@ packages:
     resolution: {integrity: sha512-OS8TUVG2kQYYwP3netunLVfeijPoOKIs1SvPQRTNOQX4Pu8xGGBEZmrv0U1YTnQn12Eg+p6w/0UdGbUnITjyzw==}
     engines: {node: 12.* || >= 14}
 
-  ember-template-lint@6.0.0:
-    resolution: {integrity: sha512-TWWt/qCd4KoQ50T3We5nCoKcsrAT8Ip79Kmm9eyWjjyL+LAbRFu0z+GxcmW7MR+QCNW/1LQs3kwEdtIcaHEGiA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+  ember-template-lint@6.1.0:
+    resolution: {integrity: sha512-UyzLPcyneG3mnbBfewyYIlV7fy6JKHQVAJy5a9+URdJKkZKN+3vQkQzIIlsz6dP/GpoXVB+datns5HlfMfliSA==}
+    engines: {node: ^18.18.0 || >= 20.9.0}
     hasBin: true
 
   ember-template-recast@6.1.5:
@@ -2080,13 +2080,13 @@ snapshots:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
 
-  '@discourse/lint-configs@2.3.1(ember-template-lint@6.0.0)(eslint@9.19.0)(prettier@2.8.8)':
+  '@discourse/lint-configs@2.3.1(ember-template-lint@6.1.0)(eslint@9.19.0)(prettier@2.8.8)':
     dependencies:
       '@babel/core': 7.26.7
       '@babel/eslint-parser': 7.26.5(@babel/core@7.26.7)(eslint@9.19.0)
       '@babel/plugin-proposal-decorators': 7.25.9(@babel/core@7.26.7)
       '@stylistic/eslint-plugin-js': 3.0.1(eslint@9.19.0)
-      ember-template-lint: 6.0.0
+      ember-template-lint: 6.1.0
       eslint: 9.19.0
       eslint-plugin-decorator-position: 6.0.0(@babel/eslint-parser@7.26.5(@babel/core@7.26.7)(eslint@9.19.0))(eslint@9.19.0)
       eslint-plugin-ember: 12.5.0(@babel/core@7.26.7)(eslint@9.19.0)
@@ -2837,7 +2837,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ember-template-lint@6.0.0:
+  ember-template-lint@6.1.0:
     dependencies:
       '@lint-todo/utils': 13.1.1
       aria-query: 5.3.2
