@@ -1,6 +1,6 @@
 {
   "name": "mass-pr",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A tool for creating automated PRs across multiple GitHub repositories",
   "main": "mass-pr.js",
   "scripts": {
@@ -14,13 +14,13 @@
   "dependencies": {
     "@octokit/core": "^3.6.0",
     "@octokit/plugin-throttling": "^3.6.2",
-    "glob": "^8.0.3",
-    "yaml": "^2.2.2",
+    "glob": "^11.0.1",
+    "yaml": "^2.7.0",
     "yargs": "^17.6.2"
   },
   "devDependencies": {
-    "@discourse/lint-configs": "1.4.2",
-    "eslint": "8.57.1",
+    "@discourse/lint-configs": "2.3.1",
+    "eslint": "9.19.0",
     "prettier": "2.8.8"
   },
   "engines": {
@@ -28,5 +28,12 @@
     "npm": "please-use-pnpm",
     "yarn": "please-use-pnpm",
     "pnpm": ">= 9"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "ember-template-lint"
+      ]
+    }
   }
 }
