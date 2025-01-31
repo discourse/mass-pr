@@ -71,7 +71,7 @@ function run(cmd, ...args) {
     opts = args.pop();
   }
   if (cmd.endsWith(".rb")) {
-    execFileSync("ruby", [cmd, ...args], { stdio: "inherit", ...opts})
+    execFileSync("ruby", [cmd, ...args], { stdio: "inherit", ...opts });
   } else {
     execFileSync(cmd, args, { stdio: "inherit", ...opts });
   }
