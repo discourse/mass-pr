@@ -17,7 +17,7 @@ def stream_and_capture(*cmd)
         $stdout.flush
       end
     end
-  
+
     # For stderr
     Thread.new do
       while char = stderr.getc

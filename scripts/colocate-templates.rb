@@ -31,7 +31,7 @@ Dir.glob("**/{discourse,admin}/templates/components/**/*.hbs").each do |template
 
   destination = template_path.sub("/templates/components/", "/components/")
   expected_js_path = destination.sub(/\.hbs$/, ".js")
-  
+
   puts "Moving #{template_path} to #{destination}"
   FileUtils.mkdir_p(File.dirname(destination))
   FileUtils.mv(template_path, destination)
