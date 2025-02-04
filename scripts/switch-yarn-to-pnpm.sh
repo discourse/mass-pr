@@ -57,7 +57,7 @@ jq '.engines = (.engines // {}) |
   "node": ">= 18",
   "npm": "please-use-pnpm",
   "yarn": "please-use-pnpm",
-  "pnpm": ">= 9"
+  "pnpm": ">= 10"
 }' package.json > temp.json && mv temp.json package.json
 
 if ! file_exists .npmrc; then
