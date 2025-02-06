@@ -41,6 +41,7 @@ jq '.private = true |
     "prettier": "2.8.8",
   } |
   del(.devDependencies["@babel/plugin-proposal-decorators"]) |
+  .engines = (.engines // {}) |
   .engines *= {
     "node": ">= 22",
     "npm": "please-use-pnpm",
@@ -48,7 +49,9 @@ jq '.private = true |
     "pnpm": "9.x"
   } |
   .packageManager = "pnpm@9.15.5"
-' repo/package.json > repo/temp.json && mv repo/temp.json repo/package.json
+' repo/package.json > repo/temp.json
+
+mv repo/temp.json repo/package.json
 
 # Copy these files from skeleton if they do not already exist
 if [ -f "repo/plugin.rb" ]; then
