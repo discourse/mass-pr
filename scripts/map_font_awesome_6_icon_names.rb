@@ -4,11 +4,7 @@ require "find"
 
 FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP = {
   /plugin\.rb$/ => [/register_svg_icon\s+"([^"]+)"/],
-  /\.hbs$/ => [
-    /{{d-icon\s+"([^"]+)"}}/,
-    /{{dIcon\s+"([^"]+)"}}/,
-    /@icon="([^"]+)"/,
-  ],
+  /\.hbs$/ => [/{{d-icon\s+"([^"]+)"}}/, /{{dIcon\s+"([^"]+)"}}/, /@icon="([^"]+)"/],
   /\.hbr$/ => [/{{d-icon\s+"([^"]+)"}}/],
   /\.gjs$/ => [
     /{{dIcon\s+"([^"]+)"}}/,
@@ -23,9 +19,7 @@ FILE_MATCHER_TO_REPLACEMENT_PATTERNS_MAP = {
     /iconHTML\("([^"]+)"\)/,
     /replaceIcon\("([^"]+)",.*"([^"]+)"\)/,
   ],
-  /\.html$/ => [
-    /replaceIcon\('([^']+)',.*'([^']+)'\)/,
-  ],
+  /\.html$/ => [/replaceIcon\('([^']+)',.*'([^']+)'\)/],
 }
 
 # Source of truth: https://github.com/discourse/discourse/blob/435fbb74082e1d060f97267a62dfa29c73979127/lib/svg_sprite.rb#L563
@@ -705,7 +699,7 @@ FA5_REMAPS = {
   "wifi-2" => "wifi-fair",
   "window-alt" => "window-flip",
   "window-close" => "rectangle-xmark",
-  "wine-glass-alt" => "wine-glass-empty"
+  "wine-glass-alt" => "wine-glass-empty",
 }
 
 DISCOURSE_COMPATIBILITY_FILE = ".discourse-compatibility"
@@ -751,7 +745,7 @@ def process_file(file_path, replacement_patterns)
     new_content.gsub!(pattern) do |match|
       original_icons = match.scan(/"([^"]+)"/).flatten
       original_icons = match.scan(/'([^']+)'/).flatten if original_icons.empty?
-      puts "Found original icons: #{original_icons.join(', ')}"
+      puts "Found original icons: #{original_icons.join(", ")}"
       original_icons.each do |icon|
         new_icon, has_FA5_icon_name = remap_icon_name(icon)
         puts "Mapped #{icon} to new icon: #{new_icon}" if icon != new_icon
@@ -789,17 +783,14 @@ end
 puts "Icon remapping completed."
 
 if should_update_compat
-  if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
-    raise "No discourse-compatibility file found"
-  end
+  raise "No discourse-compatibility file found" if !File.exist?(DISCOURSE_COMPATIBILITY_FILE)
 
   content = File.read(DISCOURSE_COMPATIBILITY_FILE)
   lines = content.split("\n")
   should_prepend =
     lines.none? do |line|
       version = line.match(/<?\s*([^:]+):/)[1].strip
-      Gem::Version.new(version) >=
-        Gem::Version.new(FA6_UPGRADE_DISCOURSE_VERSION)
+      Gem::Version.new(version) >= Gem::Version.new(FA6_UPGRADE_DISCOURSE_VERSION)
     end
 
   # Prepend the new entry if the condition is met
@@ -808,7 +799,7 @@ if should_update_compat
 
     File.write(
       DISCOURSE_COMPATIBILITY_FILE,
-      "< #{FA6_UPGRADE_DISCOURSE_VERSION}: #{latest_commit_hash}\n#{content}"
+      "< #{FA6_UPGRADE_DISCOURSE_VERSION}: #{latest_commit_hash}\n#{content}",
     )
     puts "Updating discourse-compatibility"
   end

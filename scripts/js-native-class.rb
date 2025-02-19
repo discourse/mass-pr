@@ -1,13 +1,14 @@
 #!/usr/bin/env ruby
-require 'fileutils'
-require 'open3'
+# frozen_string_literal: true
+require "fileutils"
+require "open3"
 
 CONTROL_CHARS = /\e\[[^\x40-\x7E]*[\x40-\x7E]/
 
 def stream_and_capture(*cmd)
   status = nil
-  stdout_str = ''
-  stderr_str = ''
+  stdout_str = ""
+  stderr_str = ""
 
   Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
     Thread.new do
@@ -29,18 +30,21 @@ def stream_and_capture(*cmd)
 
     status = wait_thr.value
   end
+
   [status, stdout_str, stderr_str]
 end
 
 Dir.chdir("repo")
 
-files = if File.exist?("plugin.rb")
-  Dir["{test,assets,admin/assets}/javascripts/**/*.js"]
-else
-  Dir["{test,javascripts}/**/*.js"]
-end
+files =
+  if File.exist?("plugin.rb")
+    Dir["{test,assets,admin/assets}/javascripts/**/*.js"]
+  else
+    Dir["{test,javascripts}/**/*.js"]
+  end
 
-if (files.empty? || files.none? { |f| File.read(f).include?(".extend") }) && `git diff --name-only`.empty?
+if (files.empty? || files.none? { |f| File.read(f).include?(".extend") }) &&
+     `git diff --name-only`.empty?
   puts "No files to transform"
   exit 0
 end
@@ -52,7 +56,14 @@ unless system "pnpm", "install"
 end
 
 begin
-  status, out, err = stream_and_capture({ "NO_TELEMETRY" => "true" }, "npx", "ember-native-class-codemod@4.1.1", "--no-classic-decorator", *files)
+  status, out, _ =
+    stream_and_capture(
+      { "NO_TELEMETRY" => "true" },
+      "npx",
+      "ember-native-class-codemod@4.1.1",
+      "--no-classic-decorator",
+      *files,
+    )
   exit status.exitstatus if status.exitstatus != 0
 ensure
   FileUtils.rm_rf("codemods.log")
@@ -70,7 +81,7 @@ unless system "pnpm", "prettier", "--write", "--loglevel", "error", *files
   exit 1
 end
 
-out = out.gsub(CONTROL_CHARS, "")
+out.gsub!(CONTROL_CHARS, "")
 
 changed = `git diff --name-only`
 if changed.empty?
@@ -91,7 +102,7 @@ if !out.match?(/\b0 errors/)
 end
 
 files.each do |f|
-  if File.read(f).match?(/(observes|on).*discourse-common\/utils\/decorators/)
+  if File.read(f).match?(%r{(observes|on).*discourse-common/utils/decorators})
     puts "[js-native-class] File #{f} uses observes from discourse-common. Update it."
     exit 1
   end
