@@ -1,0 +1,15 @@
+inherit_gem:
+  rubocop-discourse: stree-compat.yml
+
+inherit_mode:
+  merge:
+    - Exclude
+
+Discourse/NoChdir:
+  Enabled: false
+
+Discourse/Plugins/NamespaceConstants:
+  Enabled: false
+
+Discourse/Plugins/NamespaceMethods:
+  Enabled: false
