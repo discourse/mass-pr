@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
 
-../scripts/ensure-minimum-scaffolding.sh
-
 cd repo
 
 # Rename all *.js.es6 to *.js
@@ -78,5 +76,3 @@ else # Theme
 fi
 
 cd ..
-
-../scripts/update-workflows.sh

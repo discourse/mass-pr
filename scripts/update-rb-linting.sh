@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
 
-../scripts/ensure-minimum-scaffolding.sh
-
 cd repo
 
 # Copy these files from skeleton if they do not already exist
@@ -61,5 +59,3 @@ bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
 bundle exec rubocop . || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
 
 cd ..
-
-../scripts/update-workflows.sh
