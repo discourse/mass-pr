@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-require "fileutils"
-require "open3"
 
 CONTROL_CHARS = /\e\[[^\x40-\x7E]*[\x40-\x7E]/
 
