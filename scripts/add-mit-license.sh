@@ -11,9 +11,9 @@ fi
 
 REPO_NAME=$(basename -s '.git' $(git -C repo remote get-url origin))
 
-# Copy LICENSE from skeleton if they do not already exist
+# Copy LICENSE from skeleton
 if [ -f "repo/plugin.rb" ]; then
-  cp -vn discourse-plugin-skeleton/LICENSE repo || true
+  cp -v discourse-plugin-skeleton/LICENSE repo || true
 else # Theme
-  cp -vn discourse-theme-skeleton/LICENSE repo || true
+  cp -v discourse-theme-skeleton/LICENSE repo || true
 fi
