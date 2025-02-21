@@ -19,7 +19,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@discourse/lint-configs": "2.5.0",
+    "@discourse/lint-configs": "2.7.0",
     "eslint": "9.20.1",
     "prettier": "2.8.8"
   },
