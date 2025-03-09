@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "fileutils"
+
 Dir.chdir("repo")
 
 def is_core_override(component)

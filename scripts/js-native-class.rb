@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "fileutils"
+
 CONTROL_CHARS = /\e\[[^\x40-\x7E]*[\x40-\x7E]/
 
 def stream_and_capture(*cmd)
