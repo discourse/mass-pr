@@ -1,6 +1,6 @@
 {
   "name": "mass-pr",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tool for creating automated PRs across multiple GitHub repositories",
   "main": "mass-pr.js",
   "scripts": {
