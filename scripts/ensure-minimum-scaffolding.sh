@@ -35,11 +35,11 @@ echo "Updating linting dependencies setup in package.json..."
 jq '.private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "2.11.0",
+    "@discourse/lint-configs": "2.11.1",
     "ember-template-lint": "7.0.1",
     "eslint": "9.22.0",
     "prettier": "3.5.3",
-    "stylelint": "16.15.0"
+    "stylelint": "16.16.0"
   } |
   del(.devDependencies["@babel/plugin-proposal-decorators"]) |
   .engines = (.engines // {}) |
