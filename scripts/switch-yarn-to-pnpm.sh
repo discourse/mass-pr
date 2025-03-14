@@ -45,10 +45,11 @@ jq 'if has("scripts") then .scripts |= with_entries(.value |= gsub("yarn "; "pnp
 echo "Updating devDependencies clause in package.json..."
 jq '.devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-  "@discourse/lint-configs": "2.3.1",
+  "@discourse/lint-configs": "2.7.0",
   "ember-template-lint": "6.1.0",
-  "eslint": "9.19.0",
-  "prettier": "2.8.8"
+  "eslint": "9.20.1",
+  "prettier": "2.8.8",
+  "stylelint": "16.14.1"
 }' package.json > temp.json && mv temp.json package.json
 
 echo "Updating engines clause in package.json..."

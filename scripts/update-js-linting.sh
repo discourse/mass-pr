@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
 
-../scripts/ensure-minimum-scaffolding.sh
-
 cd repo
 
 # Rename all *.js.es6 to *.js
@@ -35,6 +33,8 @@ else
   # If package.json has changed, update all dependencies
   pnpm update
 fi
+
+pnpm dedupe
 
 # Move tests out of test/javascripts
 if [[ ! -f "plugin.rb" && -d "test/javascripts" ]]; then
@@ -78,5 +78,3 @@ else # Theme
 fi
 
 cd ..
-
-../scripts/update-workflows.sh

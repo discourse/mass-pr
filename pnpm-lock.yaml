@@ -25,8 +25,8 @@ importers:
         version: 17.7.2
     devDependencies:
       '@discourse/lint-configs':
-        specifier: 2.5.0
-        version: 2.5.0(ember-template-lint@6.1.0)(eslint@9.20.1)(postcss@8.5.3)(prettier@2.8.8)(stylelint@16.14.1(typescript@5.7.3))
+        specifier: 2.7.0
+        version: 2.7.0(ember-template-lint@6.1.0)(eslint@9.20.1)(postcss@8.5.3)(prettier@2.8.8)(stylelint@16.14.1(typescript@5.7.3))
       eslint:
         specifier: 9.20.1
         version: 9.20.1
@@ -177,8 +177,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^7.0.0
 
-  '@discourse/lint-configs@2.5.0':
-    resolution: {integrity: sha512-EmmrG+RhKUbNpJVuIdKO/J2EVWtlkRZr1UwMSOfck7sowkkVeNFK8ytM38XYpuoWijRvKHD5MDJpyy511eN8bQ==}
+  '@discourse/lint-configs@2.7.0':
+    resolution: {integrity: sha512-lkLHJVgWoweG4QMw9mwrwP30HYhzjdOHtbOlJpcLth/ZqQFhDDIiU0VchsT6JB5gfocQ+7G26WYyR3bTuGEHOg==}
     peerDependencies:
       ember-template-lint: 6.1.0
       eslint: 9.20.1
@@ -1133,8 +1133,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@15.15.0:
-    resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
+  globals@16.0.0:
+    resolution: {integrity: sha512-iInW14XItCXET01CQFqudPOWP2jYMl7T+QRQT+UNcR/iQncN/F0UNpgd76iFkBPgNQb4+X3LV9tLJYzwh+Gl3A==}
     engines: {node: '>=18'}
 
   globalthis@1.0.4:
@@ -2372,7 +2372,7 @@ snapshots:
     dependencies:
       postcss-selector-parser: 7.1.0
 
-  '@discourse/lint-configs@2.5.0(ember-template-lint@6.1.0)(eslint@9.20.1)(postcss@8.5.3)(prettier@2.8.8)(stylelint@16.14.1(typescript@5.7.3))':
+  '@discourse/lint-configs@2.7.0(ember-template-lint@6.1.0)(eslint@9.20.1)(postcss@8.5.3)(prettier@2.8.8)(stylelint@16.14.1(typescript@5.7.3))':
     dependencies:
       '@babel/core': 7.26.9
       '@babel/eslint-parser': 7.26.8(@babel/core@7.26.9)(eslint@9.20.1)
@@ -2385,7 +2385,7 @@ snapshots:
       eslint-plugin-qunit: 8.1.2(eslint@9.20.1)
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.20.1)
       eslint-plugin-sort-class-members: 1.21.0(eslint@9.20.1)
-      globals: 15.15.0
+      globals: 16.0.0
       prettier: 2.8.8
       prettier-plugin-ember-template-tag: 0.3.2
       stylelint: 16.14.1(typescript@5.7.3)
@@ -3648,7 +3648,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@15.15.0: {}
+  globals@16.0.0: {}
 
   globalthis@1.0.4:
     dependencies:
