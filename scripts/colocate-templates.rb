@@ -6,17 +6,17 @@ require "fileutils"
 Dir.chdir("repo")
 
 def is_core_override(component)
-  if !File.exist?("../core")
+  if !Dir.exist?("../discourse")
     system "git",
            "clone",
            "--depth",
            "1",
            "https://github.com/discourse/discourse",
-           "../core",
+           "../discourse",
            exception: true
   end
 
-  Dir.glob("../core/**/components/#{component}.{hbs,js,gjs}").any?
+  Dir.glob("../discourse/**/components/#{component}.{hbs,js,gjs}").any?
 end
 
 def weird_js_path(component)
