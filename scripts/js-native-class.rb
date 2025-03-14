@@ -7,8 +7,8 @@ CONTROL_CHARS = /\e\[[^\x40-\x7E]*[\x40-\x7E]/
 
 def stream_and_capture(*cmd)
   status = nil
-  stdout_str = ""
-  stderr_str = ""
+  stdout_str = +""
+  stderr_str = +""
 
   Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
     Thread.new do
