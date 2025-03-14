@@ -48,6 +48,9 @@ bundle lock --remove-platform arm64-darwin-22 &> /dev/null || true
 # Remove unnecessary requires
 test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_helper"//'
 
+# Remove unnecessary `js: true` flags in specs
+test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
+
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
 bundle exec rubocop -A . || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
