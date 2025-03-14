@@ -34,6 +34,8 @@ else
   pnpm update
 fi
 
+pnpm dedupe
+
 # Move tests out of test/javascripts
 if [[ ! -f "plugin.rb" && -d "test/javascripts" ]]; then
   mv test/javascripts/* test/
