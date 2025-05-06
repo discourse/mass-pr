@@ -14,7 +14,7 @@ files =
   if File.exist?("plugin.rb")
     Dir["assets/**/*.scss"]
   else
-    Dir["{javascripts,desktop,mobile,common,scss}/**/*.scss"]
+    Dir["{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss"]
   end
 
 if !files.any?

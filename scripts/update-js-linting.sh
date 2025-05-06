@@ -58,16 +58,16 @@ else # Theme
 fi
 
 if [ -f "plugin.rb" ]; then
-  pnpm ember-template-lint --fix --no-error-on-unmatched-pattern 'assets/javascripts/**/*.{gjs,hbs}' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
-  pnpm ember-template-lint --fix --no-error-on-unmatched-pattern 'admin/assets/javascripts/**/*.{gjs,hbs}' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
+  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'assets/javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
+  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'admin/assets/javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
 else # Theme
-  pnpm ember-template-lint --fix --no-error-on-unmatched-pattern 'javascripts/**/*.{gjs,hbs}' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
+  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
 fi
 
 if [ -f "plugin.rb" ]; then
-  pnpm prettier --write '{assets,admin/assets,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
+  pnpm prettier --write '{assets,admin/assets,test}/**/*.{scss,js,mjs,cjs,gjs,hbs}' --no-error-on-unmatched-pattern
 else # Theme
-  pnpm prettier --write '{javascripts,desktop,mobile,common,scss,test}/**/*.{scss,js,gjs,hbs}' --no-error-on-unmatched-pattern
+  pnpm prettier --write '{javascripts,desktop,mobile,common,scss,test,stylesheets}/**/*.{scss,js,mjs,cjs,gjs,hbs}' --no-error-on-unmatched-pattern
 fi
 
 # Do an extra check after prettier

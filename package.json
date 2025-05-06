@@ -1,6 +1,6 @@
 {
   "name": "mass-pr",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tool for creating automated PRs across multiple GitHub repositories",
   "main": "mass-pr.js",
   "scripts": {
@@ -19,9 +19,9 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@discourse/lint-configs": "2.7.0",
-    "eslint": "9.20.1",
-    "prettier": "2.8.8"
+    "@discourse/lint-configs": "2.16.1",
+    "eslint": "9.26.0",
+    "prettier": "3.5.3"
   },
   "packageManager": "pnpm@9.15.5",
   "engines": {
