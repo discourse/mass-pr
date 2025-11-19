@@ -14,7 +14,7 @@
   "dependencies": {
     "@octokit/core": "^6.1.4",
     "@octokit/plugin-throttling": "^9.4.0",
-    "glob": "^11.0.1",
+    "glob": "^11.1.0",
     "yaml": "^2.7.0",
     "yargs": "^17.7.2"
   },
