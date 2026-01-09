@@ -47,9 +47,9 @@ jq '.private = true |
     "node": ">= 22",
     "npm": "please-use-pnpm",
     "yarn": "please-use-pnpm",
-    "pnpm": "9.x"
+    "pnpm": "10.x"
   } |
-  .packageManager = "pnpm@9.15.5"
+  .packageManager = "pnpm@10.27.0"
 ' repo/package.json > repo/temp.json
 
 mv repo/temp.json repo/package.json
