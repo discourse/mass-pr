@@ -51,6 +51,9 @@ test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_hel
 # Remove unnecessary `js: true` flags in specs
 test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
 
+# Remove unnecessary `type: :system` flags in specs
+test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, type: :system do/ do/'
+
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
 bundle exec rubocop -A . || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
