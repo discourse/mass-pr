@@ -107,6 +107,7 @@ async function waitForKeypress() {
 async function makePR({
   script,
   branch,
+  baseBranch,
   body,
   message,
   mode,
@@ -123,7 +124,20 @@ async function makePR({
       ? `git@github.com:${repository}`
       : `https://github.com/${repository}`;
 
-  run("git", "clone", "-q", "--depth", "1", url, `${WORKSPACE_DIR}/repo`);
+  let args = ["git", "clone", "-q", "--depth", "1"];
+
+  if (baseBranch) {
+    args.push("--branch", baseBranch);
+  }
+
+  args.push(url, `${WORKSPACE_DIR}/repo`);
+
+  try {
+    run(...args);
+  } catch {
+    log(`Skipping ${repository} - the repository or the branch doesn't exist`);
+    return;
+  }
 
   const defaultBranch = execFileSync(
     "git",
@@ -218,10 +232,17 @@ async function makePR({
 
   log(`Updating '${branch}' branch for '${repository}'`);
 
-  runInRepo("git", "checkout", "-b", branch);
+  if (baseBranch !== branch) {
+    runInRepo("git", "checkout", "-b", branch);
+  }
+
   runInRepo("git", "add", ".");
   runInRepo("git", "commit", "-q", "-m", message);
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
+
+  if (baseBranch === branch) {
+    return;
+  }
 
   try {
     const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
@@ -285,6 +306,10 @@ yargs(hideBin(process.argv))
           type: "string",
           description: "Branch name",
           demandOption: true,
+        })
+        .option("base-branch", {
+          type: "string",
+          description: "Base branch used as the starting point",
         })
         .option("body", {
           type: "string",

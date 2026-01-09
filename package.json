@@ -15,13 +15,13 @@
     "@octokit/core": "^6.1.4",
     "@octokit/plugin-throttling": "^9.4.0",
     "glob": "^11.1.0",
-    "yaml": "^2.7.0",
+    "yaml": "^2.8.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@discourse/lint-configs": "2.16.1",
-    "eslint": "9.26.0",
-    "prettier": "3.5.3"
+    "@discourse/lint-configs": "2.36.0",
+    "eslint": "9.39.2",
+    "prettier": "3.7.4"
   },
   "packageManager": "pnpm@9.15.5",
   "engines": {
