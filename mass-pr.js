@@ -65,15 +65,26 @@ function logError(...message) {
 }
 
 function run(cmd, ...args) {
-  let opts;
+  let opts = {
+    stdio: "inherit",
+  };
 
-  if (typeof args[args.length - 1] === "object") {
-    opts = args.pop();
+  if (typeof args.at(-1) === "object") {
+    const extraOpts = args.pop();
+    opts = {
+      ...opts,
+      ...extraOpts,
+    };
+
+    if (extraOpts.env) {
+      opts.env = { ...env, ...extraOpts.env };
+    }
   }
+
   if (cmd.endsWith(".rb")) {
-    execFileSync("ruby", [cmd, ...args], { stdio: "inherit", ...opts });
+    execFileSync("ruby", [cmd, ...args], opts);
   } else {
-    execFileSync(cmd, args, { stdio: "inherit", ...opts });
+    execFileSync(cmd, args, opts);
   }
 }
 
@@ -140,10 +151,13 @@ async function makePR({
 
   while (true) {
     try {
-      run(`../${script}`, { cwd: `./${WORKSPACE_DIR}` });
+      run(`../${script}`, {
+        cwd: `./${WORKSPACE_DIR}`,
+        env: { PACKAGE_NAME: repository.split("/")[1] },
+      });
       break;
     } catch (err) {
-      log(`Script run failed for '${repository}'`);
+      log(`\nScript run failed for '${repository}'`);
       if (err.code === "ENOENT") {
         logError(`'${script}' doesn't exist`);
       }
