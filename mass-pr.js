@@ -104,6 +104,19 @@ async function waitForKeypress() {
   );
 }
 
+function cleanEnv(){
+  const result = {...env};
+
+  // Prevent the `mass-pr` package.json from interfering with scripts
+  for (const key of Object.keys(result)) {
+    if (key.startsWith("npm_package_")) {
+      delete result[key];
+    }
+  }
+
+  return result;
+}
+
 async function makePR({
   script,
   branch,
@@ -153,7 +166,7 @@ async function makePR({
     try {
       run(`../${script}`, {
         cwd: `./${WORKSPACE_DIR}`,
-        env: { PACKAGE_NAME: repository.split("/")[1] },
+        env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
       });
       break;
     } catch (err) {
