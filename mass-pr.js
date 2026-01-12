@@ -105,7 +105,7 @@ function cleanEnv(){
 
   // Prevent the `mass-pr` package.json from interfering with scripts
   for (const key of Object.keys(result)) {
-    if (key.startsWith("npm_package_")) {
+    if (key.startsWith("npm_")) {
       delete result[key];
     }
   }
