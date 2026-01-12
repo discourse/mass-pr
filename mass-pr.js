@@ -75,10 +75,6 @@ function run(cmd, ...args) {
       ...opts,
       ...extraOpts,
     };
-
-    if (extraOpts.env) {
-      opts.env = { ...env, ...extraOpts.env };
-    }
   }
 
   if (cmd.endsWith(".rb")) {
