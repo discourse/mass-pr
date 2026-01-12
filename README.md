@@ -24,13 +24,13 @@ repositories).
 
 For detailed usage instructions, run `pnpm mass-pr --help`.
 
-For example, to run `update-workflows.sh` for the `discourse-solved` and `discourse-assign` plugins, you would run:
+For example, to run `update-linting.sh` for the `discourse-solved` and `discourse-assign` plugins, you would run:
 
 ```bash
 GITHUB_TOKEN=... pnpm mass-pr \
-  --message "DEV: Update GitHub workflows" \
-  --branch "update-ci" \
-  --script scripts/update-workflows.sh \
+  --message "DEV: Update linting config & dependencies" \
+  --branch "update-linting" \
+  --script scripts/update-linting.sh \
   discourse-solved \
   discourse-assign
 ```
@@ -39,9 +39,9 @@ To load the list of plugins from a text file, you could use something like:
 
 ```bash
 GITHUB_TOKEN=... pnpm mass-pr \
-  --message "DEV: Update GitHub workflows" \
-  --branch "update-ci" \
-  --script scripts/update-workflows.sh \
+  --message "DEV: Update linting config & dependencies" \
+  --branch "update-linting" \
+  --script scripts/update-linting.sh \
   $(cat plugin-list.txt)
 ```
 

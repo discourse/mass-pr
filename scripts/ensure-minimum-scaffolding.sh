@@ -49,7 +49,7 @@ jq '.private = true |
     "yarn": "please-use-pnpm",
     "pnpm": "10.x"
   } |
-  .packageManager = "pnpm@10.27.0"
+  .packageManager = "pnpm@10.28.0"
 ' repo/package.json > repo/temp.json
 
 mv repo/temp.json repo/package.json
