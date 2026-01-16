@@ -14,9 +14,9 @@
   "dependencies": {
     "@octokit/core": "^6.1.4",
     "@octokit/plugin-throttling": "^9.4.0",
-    "glob": "^11.1.0",
+    "glob": "^13.0.0",
     "yaml": "^2.8.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@discourse/lint-configs": "2.37.0",
