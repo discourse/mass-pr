@@ -45,20 +45,20 @@ jq 'if has("scripts") then .scripts |= with_entries(.value |= gsub("yarn "; "pnp
 echo "Updating devDependencies clause in package.json..."
 jq '.devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "2.36.0",
+    "@discourse/lint-configs": "2.37.0",
     "ember-template-lint": "7.9.3",
     "eslint": "9.39.2",
-    "prettier": "3.7.4",
-    "stylelint": "16.26.1"
+    "prettier": "3.8.0",
+    "stylelint": "17.0.0"
 }' package.json > temp.json && mv temp.json package.json
 
 echo "Updating engines clause in package.json..."
 jq '.engines = (.engines // {}) |
   .engines *= {
-  "node": ">= 18",
+  "node": ">= 22",
   "npm": "please-use-pnpm",
   "yarn": "please-use-pnpm",
-  "pnpm": ">= 9"
+  "pnpm": "^10"
 }' package.json > temp.json && mv temp.json package.json
 
 if ! file_exists .npmrc; then
