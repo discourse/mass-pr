@@ -46,13 +46,13 @@ bundle lock --remove-platform arm64-darwin-21 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-22 &> /dev/null || true
 
 # Remove unnecessary requires
-test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_helper"//'
+test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_helper"//'
 
 # Remove unnecessary `js: true` flags in specs
-test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
+test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
 
 # Remove unnecessary `type: :system` flags in specs
-test -d /spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, type: :system do/ do/'
+test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, type: :system do/ do/'
 
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
