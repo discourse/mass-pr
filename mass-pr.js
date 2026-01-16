@@ -100,8 +100,8 @@ async function waitForKeypress() {
   );
 }
 
-function cleanEnv(){
-  const result = {...env};
+function cleanEnv() {
+  const result = { ...env };
 
   // Prevent the `mass-pr` package.json from interfering with scripts
   for (const key of Object.keys(result)) {
