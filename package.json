@@ -19,9 +19,9 @@
     "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@discourse/lint-configs": "2.37.0",
+    "@discourse/lint-configs": "2.42.0",
     "eslint": "9.39.2",
-    "prettier": "3.8.0"
+    "prettier": "3.8.1"
   },
   "packageManager": "pnpm@10.28.0",
   "engines": {
