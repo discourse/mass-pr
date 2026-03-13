@@ -176,7 +176,7 @@ async function makePR({
       }
 
       log(
-        `s to skip this repo, p to make a PR anyway, q to exit, r (or any other key) to retry the script`
+        "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to exit, [r] (or any other key) to retry the script"
       );
 
       const key = await waitForKeypress();
@@ -186,11 +186,15 @@ async function makePR({
         await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
         return;
       } else if (key === "p") {
-        log(`Making a PR anyway`);
+        log("Making a PR anyway");
         break;
       } else if (key === "q") {
-        log(`Exiting...`);
+        log("Exiting...");
         exit(1);
+      } else if (key === "l") {
+        log("Running lttf...");
+        runInRepo("pnpm", "lttf:ignore");
+        continue;
       } else {
         log(`Retrying ${repository}`);
         continue;

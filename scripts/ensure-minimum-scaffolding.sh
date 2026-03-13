@@ -41,6 +41,8 @@ jq '.private = true |
     "discourse": "npm:@discourse/types@2026.3.0-887c5be4",
     "ember-template-lint": "7.9.3",
     "eslint": "9.39.2",
+    "lint-to-the-future": "^2.6.4",
+    "lint-to-the-future-eslint": "^3.3.0",
     "prettier": "3.8.1",
     "stylelint": "17.4.0"
   } |
@@ -76,7 +78,8 @@ if [ -f "repo/plugin.rb" ]; then
     "lint:hbs:fix": "ember-template-lint {assets,admin/assets,test}/javascripts/**/*.gjs --fix --no-error-on-unmatched-pattern",
     "lint:prettier": "pnpm prettier assets/stylesheets/**/*.scss {assets,admin/assets,test}/javascripts/**/*.{js,gjs} --check --no-error-on-unmatched-pattern",
     "lint:prettier:fix": "pnpm prettier assets/stylesheets/**/*.scss {assets,admin/assets,test}/javascripts/**/*.{js,gjs} -w --no-error-on-unmatched-pattern",
-    "lint:types": "ember-tsc -b"
+    "lint:types": "ember-tsc -b",
+    "lttf:ignore": "lint-to-the-future ignore"
   }' repo/package.json > repo/temp.json
   mv repo/temp.json repo/package.json
 else # Theme
@@ -91,7 +94,8 @@ else # Theme
     "lint:hbs:fix": "ember-template-lint javascripts/**/*.gjs --fix --no-error-on-unmatched-pattern",
     "lint:prettier": "pnpm prettier {javascripts,desktop,mobile,common,scss}/**/*.scss {javascripts,test}/**/*.{js,gjs} --check --no-error-on-unmatched-pattern",
     "lint:prettier:fix": "pnpm prettier {javascripts,desktop,mobile,common,scss}/**/*.scss {javascripts,test}/**/*.{js,gjs} -w --no-error-on-unmatched-pattern",
-    "lint:types": "ember-tsc -b"
+    "lint:types": "ember-tsc -b",
+    "lttf:ignore": "lint-to-the-future ignore"
   }' repo/package.json > repo/temp.json
   mv repo/temp.json repo/package.json
 fi
