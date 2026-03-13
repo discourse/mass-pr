@@ -35,7 +35,7 @@ echo "Updating linting dependencies setup in package.json..."
 jq '.private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "2.42.0",
+    "@discourse/lint-configs": "2.43.0",
     "@glint/ember-tsc": "1.1.1",
     "concurrently": "^9.2.1",
     "discourse": "npm:@discourse/types@2026.3.0-887c5be4",
