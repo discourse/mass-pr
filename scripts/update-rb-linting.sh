@@ -33,8 +33,8 @@ fi
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 
-bundle update
 bundle update --bundler
+bundle update --all
 
 bundle lock --add-platform ruby
 bundle lock --remove-platform x86_64-linux &> /dev/null || true
