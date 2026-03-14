@@ -33,9 +33,9 @@ export function run(cmd, ...args) {
   }
 
   if (cmd.endsWith(".rb")) {
-    return execFileSync("ruby", [cmd, ...args], opts).trim();
+    return execFileSync("ruby", [cmd, ...args], opts)?.trim();
   } else {
-    return execFileSync(cmd, args, opts).trim();
+    return execFileSync(cmd, args, opts)?.trim();
   }
 }
 
