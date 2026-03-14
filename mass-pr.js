@@ -22,6 +22,15 @@ const SCRIPT_ACTIONS = {
   r: "retry",
   return: "retry",
 };
+const ASK_ACTIONS = {
+  q: "quit",
+  c: "continue",
+  return: "continue",
+};
+const DRY_RUN_ACTIONS = {
+  n: "next",
+  q: "quit",
+};
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
@@ -106,6 +115,16 @@ async function waitForKeypress() {
       resolve(key.name);
     })
   );
+}
+
+async function waitForAction(actions) {
+  while (true) {
+    const action = actions[await waitForKeypress()];
+
+    if (action) {
+      return action;
+    }
+  }
 }
 
 async function handleScriptAction(action, repository) {
@@ -214,11 +233,7 @@ async function makePR({
         "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
       );
 
-      let action;
-      while (!action) {
-        action = SCRIPT_ACTIONS[await waitForKeypress()];
-      }
-
+      const action = await waitForAction(SCRIPT_ACTIONS);
       const result = await handleScriptAction(action, repository);
       if (result === "return") {
         return;
@@ -246,24 +261,22 @@ async function makePR({
 
   if (ask) {
     log(`'${repository}' done`);
-    // TODO: [keyboard] continue on c or enter only
     log(
-      `Review result in ./${WORKSPACE_DIR}/repo. Press [q] to exit, or any other key to continue`
+      `Review result in ./${WORKSPACE_DIR}/repo. Press [c] or [enter] to continue, or [q] to quit.`
     );
-    const key = await waitForKeypress();
+    const action = await waitForAction(ASK_ACTIONS);
 
-    if (key === "q") {
+    if (action === "quit") {
       log(`Exiting...`);
       exit(1);
     }
   } else if (dryRun) {
     log(`[dry-run] '${repository}' done`);
-    // TODO: [keyboard] quit on q only
     log(
-      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo. Any other key to quit.`
+      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
-    const key = await waitForKeypress();
-    if (key === "n") {
+    const action = await waitForAction(DRY_RUN_ACTIONS);
+    if (action === "next") {
       return;
     } else {
       exit(1);
