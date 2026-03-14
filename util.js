@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { env } from "node:process";
 import readline from "readline";
 import { WORKSPACE_DIR } from "./mass-pr";
+import { octokit } from "./octokit";
 
 const RESET = "\x1b[0m";
 
@@ -109,4 +110,37 @@ export function cloneRepo(repository, baseBranch, mode) {
   }
 
   return true;
+}
+
+export async function createPullRequest(
+  owner,
+  repo,
+  title,
+  head,
+  base,
+  body,
+  repository
+) {
+  try {
+    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+      owner,
+      repo,
+      title,
+      head,
+      base,
+      body,
+    });
+    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
+  } catch (error) {
+    const errorMessage = error.response?.data?.errors?.[0]?.message;
+
+    if (errorMessage && /A pull request already exists/.test(errorMessage)) {
+      log(
+        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+      );
+    } else {
+      logError(error);
+      throw `❓ Failed to create PR for '${repository}'`;
+    }
+  }
 }

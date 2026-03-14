@@ -4,12 +4,12 @@ import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { octokit } from "./octokit";
 import {
   anyChanges,
   cleanEnv,
   cloneRepo,
   createCommitIfNeeded,
+  createPullRequest,
   log,
   logError,
   run,
@@ -177,28 +177,15 @@ async function makePR({
     return;
   }
 
-  try {
-    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
-      owner,
-      repo: repoNoOwner,
-      title: message,
-      head: branch,
-      base: baseBranch,
-      body,
-    });
-    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
-  } catch (error) {
-    const errorMessage = error.response?.data?.errors?.[0]?.message;
-
-    if (errorMessage && /A pull request already exists/.test(errorMessage)) {
-      log(
-        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
-      );
-    } else {
-      logError(error);
-      throw `❓ Failed to create PR for '${repository}'`;
-    }
-  }
+  await createPullRequest(
+    owner,
+    repoNoOwner,
+    message,
+    branch,
+    baseBranch,
+    body,
+    repository
+  );
 }
 
 async function massPR(args) {
