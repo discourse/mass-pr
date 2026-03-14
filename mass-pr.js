@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import { Octokit } from "@octokit/core";
-import { throttling } from "@octokit/plugin-throttling";
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
 import readline from "readline";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { octokit } from "./octokit";
 
-const RETRY_COUNT = 20;
-const DELAY = 5 * 60;
 const WORKSPACE_DIR = "mass-pr-workspace";
 const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const SCRIPT_ACTIONS = {
@@ -31,43 +28,6 @@ const DRY_RUN_ACTIONS = {
   n: "next",
   q: "quit",
 };
-
-const ThrottledOctokit = Octokit.plugin(throttling);
-
-const octokit = new ThrottledOctokit({
-  auth: env["GITHUB_TOKEN"],
-  throttle: {
-    minimumSecondaryRateRetryAfter: DELAY,
-
-    onRateLimit: (retryAfter, options) => {
-      if (options.request.retryCount < RETRY_COUNT) {
-        octokit.log.warn(
-          `Request quota exhausted for request ${options.method} ${options.url}`,
-          `Retrying after ${retryAfter} seconds!`
-        );
-        return true;
-      }
-    },
-
-    onSecondaryRateLimit: (retryAfter, options) => {
-      if (options.request.retryCount < RETRY_COUNT) {
-        octokit.log.warn(
-          `Secondary rate limit hit for ${options.method} ${options.url}`,
-          `Retrying after ${retryAfter} seconds!`
-        );
-        return true;
-      }
-    },
-  },
-});
-
-// Workaround for @octokit/plugin-throttling bug
-// See: https://github.com/octokit/plugin-throttling.js/pull/462
-octokit.hook.after("request", async (response, options) => {
-  if (options.request.retryCount) {
-    options.request.retryCount = 0;
-  }
-});
 
 function log(...message) {
   const green = "\x1b[32m";
