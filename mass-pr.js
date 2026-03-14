@@ -198,6 +198,14 @@ async function makePR({
 
   if (baseBranch) {
     args.push("--branch", baseBranch);
+  } else {
+    baseBranch = execFileSync(
+      "git",
+      ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
+      {
+        encoding: "utf8",
+      }
+    ).trim();
   }
 
   args.push(url, `${WORKSPACE_DIR}/repo`);
@@ -208,17 +216,6 @@ async function makePR({
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
-
-  // TODO: this is probably wrong when the baseBranch is set
-  // is this needed in the first place in those cases? or should
-  // base branch be it?
-  const defaultBranch = execFileSync(
-    "git",
-    ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
-    {
-      encoding: "utf8",
-    }
-  ).trim();
 
   log(`Running '${script}' for '${repository}'...`);
 
@@ -254,7 +251,6 @@ async function makePR({
       }
     }
   }
-
 
   if (!anyChanges()) {
     log(`✅ '${repository}' is already up to date`);
@@ -312,7 +308,7 @@ async function makePR({
       repo: repoNoOwner,
       title: message,
       head: branch,
-      base: defaultBranch,
+      base: baseBranch,
       body,
     });
     log(`✅ PR created for '${repository}': ${response.data.html_url}`);
