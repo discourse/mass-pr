@@ -163,13 +163,15 @@ function cleanEnv() {
 }
 
 function anyChanges() {
-  return execFileSync(
-    "git",
-    ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
-    {
-      encoding: "utf8",
-    }
-  ).trim() !== "";
+  return (
+    execFileSync(
+      "git",
+      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
+      {
+        encoding: "utf8",
+      }
+    ).trim() !== ""
+  );
 }
 
 function createCommitIfNeeded(message) {
