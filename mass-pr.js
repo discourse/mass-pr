@@ -4,12 +4,21 @@
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
-import readline from "readline";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { octokit } from "./octokit";
+import {
+  anyChanges,
+  cleanEnv,
+  createCommitIfNeeded,
+  log,
+  logError,
+  run,
+  runInRepo,
+  waitForKeypress,
+} from "./util";
 
-const WORKSPACE_DIR = "mass-pr-workspace";
+export const WORKSPACE_DIR = "mass-pr-workspace";
 const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const SCRIPT_ACTIONS = {
   q: "quit",
@@ -28,54 +37,6 @@ const DRY_RUN_ACTIONS = {
   n: "next",
   q: "quit",
 };
-
-function log(...message) {
-  const green = "\x1b[32m";
-  const reset = "\x1b[0m";
-  console.log(`${green}[mass-pr]${reset}`, ...message);
-}
-
-function logError(...message) {
-  const red = "\x1b[31m";
-  const reset = "\x1b[0m";
-  console.error(`${red}[mass-pr]${reset}`, ...message);
-}
-
-function run(cmd, ...args) {
-  let opts = {
-    stdio: "inherit",
-  };
-
-  if (typeof args.at(-1) === "object") {
-    const extraOpts = args.pop();
-    opts = {
-      ...opts,
-      ...extraOpts,
-    };
-  }
-
-  if (cmd.endsWith(".rb")) {
-    execFileSync("ruby", [cmd, ...args], opts);
-  } else {
-    execFileSync(cmd, args, opts);
-  }
-}
-
-function runInRepo(cmd, ...args) {
-  run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
-}
-
-async function waitForKeypress() {
-  readline.emitKeypressEvents(process.stdin);
-
-  process.stdin.setRawMode(true);
-  return new Promise((resolve) =>
-    process.stdin.once("keypress", (data, key) => {
-      process.stdin.setRawMode(false);
-      resolve(key.name);
-    })
-  );
-}
 
 async function waitForAction(actions) {
   while (true) {
@@ -107,40 +68,6 @@ async function handleScriptAction(action, repository) {
       log(`Retrying ${repository}`);
       return "continue";
   }
-}
-
-function cleanEnv() {
-  const result = { ...env };
-
-  // Prevent the `mass-pr` package.json from interfering with scripts
-  for (const key of Object.keys(result)) {
-    if (key.startsWith("npm_")) {
-      delete result[key];
-    }
-  }
-
-  return result;
-}
-
-function anyChanges() {
-  return (
-    execFileSync(
-      "git",
-      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
-      {
-        encoding: "utf8",
-      }
-    ).trim() !== ""
-  );
-}
-
-function createCommitIfNeeded(message) {
-  if (!anyChanges()) {
-    return;
-  }
-
-  runInRepo("git", "add", ".");
-  runInRepo("git", "commit", "-q", "-m", message);
 }
 
 async function makePR({
