@@ -91,6 +91,7 @@ async function processRepository({
   baseBranch ||= runInRepo("git", "branch", "--show-current", {
     encoding: "utf8",
   });
+  log(`Base branch: ${baseBranch}`);
 
   if (baseBranch !== branch) {
     runInRepo("git", "checkout", "-b", branch);
