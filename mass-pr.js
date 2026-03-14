@@ -14,11 +14,11 @@ import {
   logError,
   run,
   runInRepo,
+  SKIPPED_REPOS_PATH,
   waitForKeypress,
-} from "./util";
+  WORKSPACE_DIR,
+} from "./util.js";
 
-export const WORKSPACE_DIR = "mass-pr-workspace";
-const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const SCRIPT_ACTIONS = {
   q: "quit",
   s: "skip",

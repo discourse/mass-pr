@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { env } from "node:process";
 import readline from "readline";
-import { WORKSPACE_DIR } from "./mass-pr";
-import { octokit } from "./octokit";
+import { octokit } from "./octokit.js";
 
+export const WORKSPACE_DIR = "mass-pr-workspace";
+export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const RESET = "\x1b[0m";
 
 export function log(...message) {
