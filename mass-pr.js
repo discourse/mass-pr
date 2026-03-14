@@ -204,7 +204,7 @@ async function massPR(args) {
     await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   }
 
-  log("Complete 🚀");
+  log("All done! 🚀");
   exit(0);
 }
 
