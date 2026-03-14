@@ -146,8 +146,6 @@ async function handleScriptAction(action, repository) {
     case "retry":
       log(`Retrying ${repository}`);
       return "continue";
-    default:
-      throw new Error(`Unknown script failure action: ${action}`);
   }
 }
 
