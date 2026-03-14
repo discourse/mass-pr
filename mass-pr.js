@@ -215,6 +215,10 @@ async function makePR({
     return;
   }
 
+  if (baseBranch !== branch) {
+    runInRepo("git", "checkout", "-b", branch);
+  }
+
   log(`Running '${script}' for '${repository}'...`);
 
   while (true) {
@@ -283,11 +287,6 @@ async function makePR({
   }
 
   log(`Updating '${branch}' branch for '${repository}'`);
-
-  // TODO: move before the main loop
-  if (baseBranch !== branch) {
-    runInRepo("git", "checkout", "-b", branch);
-  }
 
   // TODO: do these before each prompt (as "automatic changes") and after (as "manual changes")
   runInRepo("git", "add", ".");
