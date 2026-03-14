@@ -87,7 +87,7 @@ export function createCommitIfNeeded(message) {
   }
 
   runInRepo("git", "add", ".");
-  runInRepo("git", "commit", "-q", "-m", message);
+  runInRepo("git", "commit", "-q", "-m", `'${message}'`);
 }
 
 export function cloneRepo(repository, baseBranch, mode) {
