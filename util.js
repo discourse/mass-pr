@@ -86,3 +86,26 @@ export function createCommitIfNeeded(message) {
   runInRepo("git", "add", ".");
   runInRepo("git", "commit", "-q", "-m", message);
 }
+
+export function cloneRepo(repository, baseBranch, mode) {
+  const url =
+    mode === "ssh"
+      ? `git@github.com:${repository}`
+      : `https://github.com/${repository}`;
+
+  let args = ["git", "clone", "-q", "--depth", "1"];
+
+  if (baseBranch) {
+    args.push("--branch", baseBranch);
+  }
+
+  args.push(url, `${WORKSPACE_DIR}/repo`);
+
+  try {
+    run(...args);
+  } catch {
+    return false;
+  }
+
+  return true;
+}

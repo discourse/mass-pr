@@ -10,6 +10,7 @@ import { octokit } from "./octokit";
 import {
   anyChanges,
   cleanEnv,
+  cloneRepo,
   createCommitIfNeeded,
   log,
   logError,
@@ -85,22 +86,7 @@ async function makePR({
 
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
-  const url =
-    mode === "ssh"
-      ? `git@github.com:${repository}`
-      : `https://github.com/${repository}`;
-
-  let args = ["git", "clone", "-q", "--depth", "1"];
-
-  if (baseBranch) {
-    args.push("--branch", baseBranch);
-  }
-
-  args.push(url, `${WORKSPACE_DIR}/repo`);
-
-  try {
-    run(...args);
-  } catch {
+  if (!cloneRepo(repository, baseBranch, mode)) {
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
