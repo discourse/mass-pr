@@ -81,8 +81,6 @@ async function processRepository({
   ask,
   dryRun,
 }) {
-  const [owner, repoNoOwner] = repository.split("/");
-
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
   if (!cloneRepo(repository, baseBranch, mode)) {
@@ -176,6 +174,8 @@ async function processRepository({
   if (baseBranch === branch) {
     return;
   }
+
+  const [owner, repoNoOwner] = repository.split("/");
 
   await createPullRequest(
     owner,
