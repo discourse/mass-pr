@@ -94,14 +94,6 @@ async function makePR({
 
   if (baseBranch) {
     args.push("--branch", baseBranch);
-  } else {
-    baseBranch = execFileSync(
-      "git",
-      ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
-      {
-        encoding: "utf8",
-      }
-    ).trim();
   }
 
   args.push(url, `${WORKSPACE_DIR}/repo`);
@@ -112,6 +104,14 @@ async function makePR({
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
+
+  baseBranch ||= execFileSync(
+    "git",
+    ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
+    {
+      encoding: "utf8",
+    }
+  ).trim();
 
   if (baseBranch !== branch) {
     runInRepo("git", "checkout", "-b", branch);
