@@ -31,14 +31,23 @@ export function run(cmd, ...args) {
   }
 
   if (cmd.endsWith(".rb")) {
-    execFileSync("ruby", [cmd, ...args], opts);
+    return execFileSync("ruby", [cmd, ...args], opts);
   } else {
-    execFileSync(cmd, args, opts);
+    return execFileSync(cmd, args, opts);
   }
 }
 
 export function runInRepo(cmd, ...args) {
-  run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
+  let opts = {};
+  if (typeof args.at(-1) === "object") {
+    const extraOpts = args.pop();
+    opts = {
+      ...opts,
+      ...extraOpts,
+    };
+  }
+
+  return run(cmd, ...args, { ...opts, cwd: `./${WORKSPACE_DIR}/repo` });
 }
 
 export async function waitForKeypress() {

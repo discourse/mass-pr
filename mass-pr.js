@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import { execFileSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
 import yargs from "yargs";
@@ -91,13 +90,9 @@ async function makePR({
     return;
   }
 
-  baseBranch ||= execFileSync(
-    "git",
-    ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
-    {
-      encoding: "utf8",
-    }
-  ).trim();
+  baseBranch ||= runInRepo("git", "branch", "--show-current", {
+    encoding: "utf8",
+  });
 
   if (baseBranch !== branch) {
     runInRepo("git", "checkout", "-b", branch);
