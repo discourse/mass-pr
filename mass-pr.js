@@ -164,6 +164,16 @@ function cleanEnv() {
   return result;
 }
 
+function anyChanges() {
+  return execFileSync(
+    "git",
+    ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
+    {
+      encoding: "utf8",
+    }
+  ).trim() !== "";
+}
+
 async function makePR({
   script,
   branch,
@@ -245,17 +255,8 @@ async function makePR({
     }
   }
 
-  // TODO: move to a helper fn
-  const anyChanges =
-    execFileSync(
-      "git",
-      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
-      {
-        encoding: "utf8",
-      }
-    ).trim() !== "";
 
-  if (!anyChanges) {
+  if (!anyChanges()) {
     log(`✅ '${repository}' is already up to date`);
   }
 
@@ -283,7 +284,7 @@ async function makePR({
     }
   }
 
-  if (!anyChanges) {
+  if (!anyChanges()) {
     return;
   }
 
