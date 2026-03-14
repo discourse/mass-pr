@@ -69,6 +69,29 @@ async function handleScriptAction(action, repository) {
   }
 }
 
+function runScript(repository, script) {
+  try {
+    run(`../${script}`, {
+      cwd: `./${WORKSPACE_DIR}`,
+      env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
+    });
+
+    return true;
+  } catch (err) {
+    log(`\nScript run failed for '${repository}'`);
+
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    }
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
+}
+
 async function makePR({
   script,
   branch,
@@ -100,24 +123,11 @@ async function makePR({
   log(`Running '${script}' for '${repository}'...`);
 
   while (true) {
-    try {
-      run(`../${script}`, {
-        cwd: `./${WORKSPACE_DIR}`,
-        env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
-      });
-      break;
-    } catch (err) {
-      log(`\nScript run failed for '${repository}'`);
-      if (err.code === "ENOENT") {
-        logError(`'${script}' doesn't exist`);
-      }
+    const succeeded = runScript(repository, script);
 
-      if (!process.stdin.isTTY) {
-        throw err;
-      }
+    createCommitIfNeeded("automatic changes");
 
-      createCommitIfNeeded("automatic changes");
-
+    if (!succeeded) {
       log(
         "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
       );
