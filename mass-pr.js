@@ -5,7 +5,7 @@ import { env, exit } from "node:process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import {
-  anyChanges,
+  anyNewCommits,
   cleanEnv,
   cloneRepo,
   createCommitIfNeeded,
@@ -97,6 +97,10 @@ async function processRepository({
     runInRepo("git", "checkout", "-b", branch);
   }
 
+  const startingCommit = runInRepo("git", "rev-parse", "HEAD", {
+    encoding: "utf8",
+  });
+
   log(`Running '${script}' for '${repository}'...`);
 
   while (true) {
@@ -136,7 +140,7 @@ async function processRepository({
     }
   }
 
-  if (!anyChanges()) {
+  if (!anyNewCommits(startingCommit)) {
     log(`✅ '${repository}' is already up to date`);
   }
 
@@ -169,7 +173,7 @@ async function processRepository({
     }
   }
 
-  if (!anyChanges()) {
+  if (!anyNewCommits(startingCommit)) {
     return;
   }
 

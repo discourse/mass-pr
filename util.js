@@ -66,7 +66,15 @@ export function cleanEnv() {
   return result;
 }
 
-export function anyChanges() {
+export function anyNewCommits(baseRef = "@{upstream}") {
+  return (
+    runInRepo("git", "rev-list", "--max-count=1", `${baseRef}..HEAD`, {
+      encoding: "utf8",
+    }) !== ""
+  );
+}
+
+function anyChanges() {
   return runInRepo("git", "status", "--porcelain", { encoding: "utf8" }) !== "";
 }
 
