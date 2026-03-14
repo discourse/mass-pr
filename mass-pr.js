@@ -14,6 +14,14 @@ const RETRY_COUNT = 20;
 const DELAY = 5 * 60;
 const WORKSPACE_DIR = "mass-pr-workspace";
 const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
+const SCRIPT_ACTIONS = {
+  q: "quit",
+  s: "skip",
+  p: "proceed",
+  l: "lttf",
+  r: "retry",
+  return: "retry",
+};
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
@@ -100,6 +108,30 @@ async function waitForKeypress() {
   );
 }
 
+async function handleScriptAction(action, repository) {
+  switch (action) {
+    case "quit":
+      log("Quitting...");
+      return exit(1);
+    case "skip":
+      log(`Skipping ${repository}`);
+      await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
+      return "return";
+    case "proceed":
+      log("Making a PR anyway");
+      return "break";
+    case "lttf":
+      log("Running lint-to-the-future...");
+      runInRepo("pnpm", "lttf:ignore");
+      return "continue";
+    case "retry":
+      log(`Retrying ${repository}`);
+      return "continue";
+    default:
+      throw new Error(`Unknown script failure action: ${action}`);
+  }
+}
+
 function cleanEnv() {
   const result = { ...env };
 
@@ -179,37 +211,17 @@ async function makePR({
         "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
       );
 
-      let command;
-      while (!command) {
-        const key = await waitForKeypress();
-
-        if (key === "q") {
-          log("Quitting...");
-          exit(1);
-        } else if (key === "s") {
-          command = "skip";
-        } else if (key === "p") {
-          command = "pr";
-        } else if (key === "l") {
-          command = "lttf";
-        } else if (key === "r" || key === "return") {
-          command = "retry";
-        }
+      let action;
+      while (!action) {
+        action = SCRIPT_ACTIONS[await waitForKeypress()];
       }
 
-      if (command === "skip") {
-        log(`Skipping ${repository}`);
-        await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
+      const result = await handleScriptAction(action, repository);
+      if (result === "return") {
         return;
-      } else if (command === "pr") {
-        log("Making a PR anyway");
+      } else if (result === "break") {
         break;
-      } else if (command === "lttf") {
-        log("Running lint-to-the-future...");
-        runInRepo("pnpm", "lttf:ignore");
-        continue;
-      } else if (command === "retry") {
-        log(`Retrying ${repository}`);
+      } else if (result === "continue") {
         continue;
       }
     }
