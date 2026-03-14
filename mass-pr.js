@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
 import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
@@ -196,7 +195,7 @@ async function makePR({
         `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
       );
     } else {
-      console.error(error);
+      logError(error);
       throw `❓ Failed to create PR for '${repository}'`;
     }
   }
