@@ -125,7 +125,7 @@ async function makePR({
       const action = await waitForAction(SCRIPT_ACTIONS);
       const result = await handleScriptAction(action, repository);
 
-      createCommitIfNeeded("automatic changes");
+      createCommitIfNeeded("manual changes");
 
       if (result === "return") {
         return;
