@@ -172,6 +172,15 @@ function anyChanges() {
   ).trim() !== "";
 }
 
+function createCommitIfNeeded(message) {
+  if (!anyChanges()) {
+    return;
+  }
+
+  runInRepo("git", "add", ".");
+  runInRepo("git", "commit", "-q", "-m", message);
+}
+
 async function makePR({
   script,
   branch,
@@ -238,12 +247,17 @@ async function makePR({
         throw err;
       }
 
+      createCommitIfNeeded("automatic changes");
+
       log(
         "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
       );
 
       const action = await waitForAction(SCRIPT_ACTIONS);
       const result = await handleScriptAction(action, repository);
+
+      createCommitIfNeeded("automatic changes");
+
       if (result === "return") {
         return;
       } else if (result === "break") {
@@ -287,11 +301,6 @@ async function makePR({
   }
 
   log(`Updating '${branch}' branch for '${repository}'`);
-
-  // TODO: do these before each prompt (as "automatic changes") and after (as "manual changes")
-  runInRepo("git", "add", ".");
-  runInRepo("git", "commit", "-q", "-m", message);
-
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
   // Don't create a PR when updating an existing branch
