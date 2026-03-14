@@ -20,12 +20,14 @@ export function logError(...message) {
 }
 
 export function run(cmd, ...args) {
-  let opts = {
-    stdio: "inherit",
-  };
+  let opts = {};
 
   while (typeof args.at(-1) === "object") {
     Object.assign(opts, args.pop());
+  }
+
+  if (!opts.encoding) {
+    opts.stdio = "inherit";
   }
 
   if (cmd.endsWith(".rb")) {
