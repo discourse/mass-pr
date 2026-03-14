@@ -147,6 +147,8 @@ async function processRepository({
     );
     const action = await waitForAction(ASK_ACTIONS);
 
+    createCommitIfNeeded("manual changes");
+
     if (action === "quit") {
       log(`Exiting...`);
       exit(1);
@@ -157,6 +159,9 @@ async function processRepository({
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
     const action = await waitForAction(DRY_RUN_ACTIONS);
+
+    createCommitIfNeeded("manual changes");
+
     if (action === "next") {
       return;
     } else {
