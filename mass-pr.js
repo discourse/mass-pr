@@ -70,7 +70,7 @@ function runScript(repository, script) {
   }
 }
 
-async function makePR({
+async function processRepository({
   script,
   branch,
   baseBranch,
@@ -193,7 +193,7 @@ async function massPR(args) {
   await fs.mkdir(`./${WORKSPACE_DIR}`);
 
   for (const repository of args.repositories) {
-    await makePR({ ...args, repository });
+    await processRepository({ ...args, repository });
   }
 
   try {
