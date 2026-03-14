@@ -24,12 +24,8 @@ export function run(cmd, ...args) {
     stdio: "inherit",
   };
 
-  if (typeof args.at(-1) === "object") {
-    const extraOpts = args.pop();
-    opts = {
-      ...opts,
-      ...extraOpts,
-    };
+  while (typeof args.at(-1) === "object") {
+    Object.assign(opts, args.pop());
   }
 
   if (cmd.endsWith(".rb")) {
@@ -40,16 +36,7 @@ export function run(cmd, ...args) {
 }
 
 export function runInRepo(cmd, ...args) {
-  let opts = {};
-  if (typeof args.at(-1) === "object") {
-    const extraOpts = args.pop();
-    opts = {
-      ...opts,
-      ...extraOpts,
-    };
-  }
-
-  return run(cmd, ...args, { ...opts, cwd: `./${WORKSPACE_DIR}/repo` });
+  return run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
 }
 
 export async function waitForKeypress() {
