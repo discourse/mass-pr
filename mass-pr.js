@@ -180,6 +180,9 @@ async function makePR({
     return;
   }
 
+  // TODO: this is probably wrong when the baseBranch is set
+  // is this needed in the first place in those cases? or should
+  // base branch be it?
   const defaultBranch = execFileSync(
     "git",
     ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
@@ -227,6 +230,7 @@ async function makePR({
     }
   }
 
+  // TODO: move to a helper fn
   const anyChanges =
     execFileSync(
       "git",
@@ -242,8 +246,9 @@ async function makePR({
 
   if (ask) {
     log(`'${repository}' done`);
+    // TODO: [keyboard] continue on c or enter only
     log(
-      `Review result in ./${WORKSPACE_DIR}/repo. Press q to exit, or any other key to continue`
+      `Review result in ./${WORKSPACE_DIR}/repo. Press [q] to exit, or any other key to continue`
     );
     const key = await waitForKeypress();
 
@@ -253,8 +258,9 @@ async function makePR({
     }
   } else if (dryRun) {
     log(`[dry-run] '${repository}' done`);
+    // TODO: [keyboard] quit on q only
     log(
-      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press n to try next repo. Any other key to quit.`
+      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo. Any other key to quit.`
     );
     const key = await waitForKeypress();
     if (key === "n") {
@@ -270,14 +276,18 @@ async function makePR({
 
   log(`Updating '${branch}' branch for '${repository}'`);
 
+  // TODO: move before the main loop
   if (baseBranch !== branch) {
     runInRepo("git", "checkout", "-b", branch);
   }
 
+  // TODO: do these before each prompt (as "automatic changes") and after (as "manual changes")
   runInRepo("git", "add", ".");
   runInRepo("git", "commit", "-q", "-m", message);
+
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
+  // Don't create a PR when updating an existing branch
   if (baseBranch === branch) {
     return;
   }
