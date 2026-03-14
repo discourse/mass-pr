@@ -31,9 +31,9 @@ export function run(cmd, ...args) {
   }
 
   if (cmd.endsWith(".rb")) {
-    return execFileSync("ruby", [cmd, ...args], opts);
+    return execFileSync("ruby", [cmd, ...args], opts).trim();
   } else {
-    return execFileSync(cmd, args, opts);
+    return execFileSync(cmd, args, opts).trim();
   }
 }
 
@@ -52,8 +52,8 @@ export function runInRepo(cmd, ...args) {
 
 export async function waitForKeypress() {
   readline.emitKeypressEvents(process.stdin);
-
   process.stdin.setRawMode(true);
+
   return new Promise((resolve) =>
     process.stdin.once("keypress", (data, key) => {
       process.stdin.setRawMode(false);
@@ -76,15 +76,7 @@ export function cleanEnv() {
 }
 
 export function anyChanges() {
-  return (
-    execFileSync(
-      "git",
-      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
-      {
-        encoding: "utf8",
-      }
-    ).trim() !== ""
-  );
+  return runInRepo("git", "status", "--porcelain", { encoding: "utf8" }) !== "";
 }
 
 export function createCommitIfNeeded(message) {
