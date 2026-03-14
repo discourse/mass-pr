@@ -337,15 +337,18 @@ async function makePR({
 async function massPR(args) {
   await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   await fs.mkdir(`./${WORKSPACE_DIR}`);
+
   for (const repository of args.repositories) {
     await makePR({ ...args, repository });
   }
+
   try {
     await fs.access(`./${SKIPPED_REPOS_PATH}`);
   } catch {
     // no skipped repos so we can proceed to clean up
     await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   }
+
   log("Complete 🚀");
   exit(0);
 }
