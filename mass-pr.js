@@ -176,26 +176,39 @@ async function makePR({
       }
 
       log(
-        "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to exit, [r] (or any other key) to retry the script"
+        "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
       );
 
-      const key = await waitForKeypress();
+      let command;
+      while (!command) {
+        const key = await waitForKeypress();
 
-      if (key === "s") {
+        if (key === "q") {
+          log("Quitting...");
+          exit(1);
+        } else if (key === "s") {
+          command = "skip";
+        } else if (key === "p") {
+          command = "pr";
+        } else if (key === "l") {
+          command = "lttf";
+        } else if (key === "r" || key === "return") {
+          command = "retry";
+        }
+      }
+
+      if (command === "skip") {
         log(`Skipping ${repository}`);
         await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
         return;
-      } else if (key === "p") {
+      } else if (command === "pr") {
         log("Making a PR anyway");
         break;
-      } else if (key === "q") {
-        log("Exiting...");
-        exit(1);
-      } else if (key === "l") {
-        log("Running lttf...");
+      } else if (command === "lttf") {
+        log("Running lint-to-the-future...");
         runInRepo("pnpm", "lttf:ignore");
         continue;
-      } else {
+      } else if (command === "retry") {
         log(`Retrying ${repository}`);
         continue;
       }
