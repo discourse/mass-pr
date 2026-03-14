@@ -106,11 +106,10 @@ export function cloneRepo(repository, baseBranch, mode) {
 
   try {
     run(...args);
+    return true;
   } catch {
     return false;
   }
-
-  return true;
 }
 
 export async function createPullRequest(
