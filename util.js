@@ -6,6 +6,7 @@ import { octokit } from "./octokit.js";
 export const WORKSPACE_DIR = "mass-pr-workspace";
 export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const RESET = "\x1b[0m";
+const MASS_PR_LABEL = "mass-pr";
 
 export function log(...message) {
   const green = "\x1b[32m";
@@ -109,6 +110,18 @@ export function cloneRepo(repository, baseBranch, mode) {
   }
 }
 
+async function addPullRequestLabel(owner, repo, issueNumber) {
+  await octokit.request(
+    "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
+    {
+      owner,
+      repo,
+      issue_number: issueNumber,
+      labels: [MASS_PR_LABEL],
+    }
+  );
+}
+
 export async function createPullRequest(
   owner,
   repo,
@@ -118,6 +131,8 @@ export async function createPullRequest(
   body,
   repository
 ) {
+  let pullRequest;
+
   try {
     const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
       owner,
@@ -127,7 +142,7 @@ export async function createPullRequest(
       base,
       body,
     });
-    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
+    pullRequest = response.data;
   } catch (error) {
     const errorMessage = error.response?.data?.errors?.[0]?.message;
 
@@ -135,9 +150,19 @@ export async function createPullRequest(
       log(
         `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
       );
+      return;
     } else {
       logError(error);
       throw `❓ Failed to create PR for '${repository}'`;
     }
   }
+
+  try {
+    await addPullRequestLabel(owner, repo, pullRequest.number);
+  } catch (error) {
+    logError(error);
+    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for '${repository}'`;
+  }
+
+  log(`✅ PR ready for '${repository}': ${pullRequest.html_url}`);
 }
