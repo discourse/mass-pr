@@ -33,11 +33,3 @@ export const octokit = new ThrottledOctokit({
     },
   },
 });
-
-// Workaround for @octokit/plugin-throttling bug
-// See: https://github.com/octokit/plugin-throttling.js/pull/462
-octokit.hook.after("request", async (response, options) => {
-  if (options.request.retryCount) {
-    options.request.retryCount = 0;
-  }
-});
