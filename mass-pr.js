@@ -116,27 +116,27 @@ async function processRepository({
       "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
     );
 
-    switch (await waitForAction(SCRIPT_ACTIONS)) {
-      case "quit":
-        log("Quitting...");
-        return exit(1);
-      case "skip":
-        log(`Skipping ${repository}`);
-        await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
-        return;
-      case "proceed":
-        createCommitIfNeeded("manual changes");
-        log("Making a PR anyway");
-        break;
-      case "lttf":
-        createCommitIfNeeded("manual changes");
-        log("Running lint-to-the-future...");
-        runInRepo("pnpm", "lttf:ignore");
-        continue;
-      case "retry":
-        createCommitIfNeeded("manual changes");
-        log(`Retrying ${repository}`);
-        continue;
+    const action = await waitForAction(SCRIPT_ACTIONS);
+    if (action === "quit") {
+      log("Quitting...");
+      return exit(1);
+    } else if (action === "skip") {
+      log(`Skipping ${repository}`);
+      await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
+      return;
+    } else if (action === "proceed") {
+      createCommitIfNeeded("manual changes");
+      log("Making a PR anyway");
+      break;
+    } else if (action === "lttf") {
+      createCommitIfNeeded("manual changes");
+      log("Running lint-to-the-future...");
+      runInRepo("pnpm", "lttf:ignore");
+      continue;
+    } else if (action === "retry") {
+      createCommitIfNeeded("manual changes");
+      log(`Retrying ${repository}`);
+      continue;
     }
   }
 
