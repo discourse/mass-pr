@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { env } from "node:process";
+import { setTimeout as wait } from "node:timers/promises";
 import readline from "readline";
 import { octokit } from "./octokit.js";
 
@@ -7,6 +8,8 @@ export const WORKSPACE_DIR = "mass-pr-workspace";
 export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const RESET = "\x1b[0m";
 const MASS_PR_LABEL = "mass-pr";
+const LABEL_RETRY_COUNT = 2;
+const LABEL_RETRY_DELAY_MS = 2_000;
 
 export function log(...message) {
   const green = "\x1b[32m";
@@ -110,16 +113,25 @@ export function cloneRepo(repository, baseBranch, mode) {
   }
 }
 
-async function addPullRequestLabel(owner, repo, issueNumber) {
-  await octokit.request(
-    "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
-    {
-      owner,
-      repo,
-      issue_number: issueNumber,
-      labels: [MASS_PR_LABEL],
+async function addPullRequestLabel(owner, repo, issueNumber, attempt = 0) {
+  try {
+    await octokit.request(
+      "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
+      {
+        owner,
+        repo,
+        issue_number: issueNumber,
+        labels: [MASS_PR_LABEL],
+      }
+    );
+  } catch (error) {
+    if (attempt === LABEL_RETRY_COUNT) {
+      throw error;
     }
-  );
+
+    await wait(LABEL_RETRY_DELAY_MS);
+    await addPullRequestLabel(owner, repo, issueNumber, attempt + 1);
+  }
 }
 
 export async function createPullRequest(
