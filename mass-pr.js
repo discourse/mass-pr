@@ -1,119 +1,76 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
-import { Octokit } from "@octokit/core";
-import { throttling } from "@octokit/plugin-throttling";
-import { execFileSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { env, exit } from "node:process";
-import readline from "readline";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import {
+  anyNewCommits,
+  cleanEnv,
+  cloneRepo,
+  createCommitIfNeeded,
+  createPullRequest,
+  log,
+  logError,
+  run,
+  runInRepo,
+  SKIPPED_REPOS_PATH,
+  waitForKeypress,
+  WORKSPACE_DIR,
+} from "./util.js";
 
-const RETRY_COUNT = 20;
-const DELAY = 5 * 60;
-const WORKSPACE_DIR = "mass-pr-workspace";
-const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
+const SCRIPT_ACTIONS = {
+  q: "quit",
+  s: "skip",
+  p: "proceed",
+  l: "lttf",
+  r: "retry",
+  return: "retry",
+};
+const ASK_ACTIONS = {
+  q: "quit",
+  c: "continue",
+  return: "continue",
+};
+const DRY_RUN_ACTIONS = {
+  n: "next",
+  q: "quit",
+};
 
-const ThrottledOctokit = Octokit.plugin(throttling);
+async function waitForAction(actions) {
+  while (true) {
+    const action = actions[await waitForKeypress()];
 
-const octokit = new ThrottledOctokit({
-  auth: env["GITHUB_TOKEN"],
-  throttle: {
-    minimumSecondaryRateRetryAfter: DELAY,
-
-    onRateLimit: (retryAfter, options) => {
-      if (options.request.retryCount < RETRY_COUNT) {
-        octokit.log.warn(
-          `Request quota exhausted for request ${options.method} ${options.url}`,
-          `Retrying after ${retryAfter} seconds!`
-        );
-        return true;
-      }
-    },
-
-    onSecondaryRateLimit: (retryAfter, options) => {
-      if (options.request.retryCount < RETRY_COUNT) {
-        octokit.log.warn(
-          `Secondary rate limit hit for ${options.method} ${options.url}`,
-          `Retrying after ${retryAfter} seconds!`
-        );
-        return true;
-      }
-    },
-  },
-});
-
-// Workaround for @octokit/plugin-throttling bug
-// See: https://github.com/octokit/plugin-throttling.js/pull/462
-octokit.hook.after("request", async (response, options) => {
-  if (options.request.retryCount) {
-    options.request.retryCount = 0;
-  }
-});
-
-function log(...message) {
-  const green = "\x1b[32m";
-  const reset = "\x1b[0m";
-  console.log(`${green}[mass-pr]${reset}`, ...message);
-}
-
-function logError(...message) {
-  const red = "\x1b[31m";
-  const reset = "\x1b[0m";
-  console.error(`${red}[mass-pr]${reset}`, ...message);
-}
-
-function run(cmd, ...args) {
-  let opts = {
-    stdio: "inherit",
-  };
-
-  if (typeof args.at(-1) === "object") {
-    const extraOpts = args.pop();
-    opts = {
-      ...opts,
-      ...extraOpts,
-    };
-  }
-
-  if (cmd.endsWith(".rb")) {
-    execFileSync("ruby", [cmd, ...args], opts);
-  } else {
-    execFileSync(cmd, args, opts);
-  }
-}
-
-function runInRepo(cmd, ...args) {
-  run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
-}
-
-async function waitForKeypress() {
-  readline.emitKeypressEvents(process.stdin);
-
-  process.stdin.setRawMode(true);
-  return new Promise((resolve) =>
-    process.stdin.once("keypress", (data, key) => {
-      process.stdin.setRawMode(false);
-      resolve(key.name);
-    })
-  );
-}
-
-function cleanEnv() {
-  const result = { ...env };
-
-  // Prevent the `mass-pr` package.json from interfering with scripts
-  for (const key of Object.keys(result)) {
-    if (key.startsWith("npm_")) {
-      delete result[key];
+    if (action) {
+      return action;
     }
   }
-
-  return result;
 }
 
-async function makePR({
+function runScript(repository, script) {
+  try {
+    run(`../${script}`, {
+      cwd: `./${WORKSPACE_DIR}`,
+      env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
+    });
+
+    return true;
+  } catch (err) {
+    log(`\nScript run failed for '${repository}'`);
+
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    }
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
+}
+
+async function processRepository({
   script,
   branch,
   baseBranch,
@@ -124,172 +81,139 @@ async function makePR({
   ask,
   dryRun,
 }) {
-  const [owner, repoNoOwner] = repository.split("/");
-
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
-  const url =
-    mode === "ssh"
-      ? `git@github.com:${repository}`
-      : `https://github.com/${repository}`;
-
-  let args = ["git", "clone", "-q", "--depth", "1"];
-
-  if (baseBranch) {
-    args.push("--branch", baseBranch);
-  }
-
-  args.push(url, `${WORKSPACE_DIR}/repo`);
-
-  try {
-    run(...args);
-  } catch {
+  if (!cloneRepo(repository, baseBranch, mode)) {
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
 
-  const defaultBranch = execFileSync(
-    "git",
-    ["-C", `${WORKSPACE_DIR}/repo`, "branch", "--show-current"],
-    {
-      encoding: "utf8",
-    }
-  ).trim();
+  baseBranch ||= runInRepo("git", "branch", "--show-current", {
+    encoding: "utf8",
+  });
+  log(`Base branch: ${baseBranch}`);
+
+  if (baseBranch !== branch) {
+    runInRepo("git", "checkout", "-b", branch);
+  }
+
+  const startingCommit = runInRepo("git", "rev-parse", "HEAD", {
+    encoding: "utf8",
+  });
 
   log(`Running '${script}' for '${repository}'...`);
 
   while (true) {
-    try {
-      run(`../${script}`, {
-        cwd: `./${WORKSPACE_DIR}`,
-        env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
-      });
+    const succeeded = runScript(repository, script);
+
+    createCommitIfNeeded("automatic changes");
+
+    if (succeeded) {
       break;
-    } catch (err) {
-      log(`\nScript run failed for '${repository}'`);
-      if (err.code === "ENOENT") {
-        logError(`'${script}' doesn't exist`);
-      }
+    }
 
-      if (!process.stdin.isTTY) {
-        throw err;
-      }
+    log(
+      "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
+    );
 
-      log(
-        `s to skip this repo, p to make a PR anyway, q to exit, r (or any other key) to retry the script`
-      );
-
-      const key = await waitForKeypress();
-
-      if (key === "s") {
-        log(`Skipping ${repository}`);
-        await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
-        return;
-      } else if (key === "p") {
-        log(`Making a PR anyway`);
-        break;
-      } else if (key === "q") {
-        log(`Exiting...`);
-        exit(1);
-      } else {
-        log(`Retrying ${repository}`);
-        continue;
-      }
+    const action = await waitForAction(SCRIPT_ACTIONS);
+    if (action === "quit") {
+      log("Quitting...");
+      return exit(1);
+    } else if (action === "skip") {
+      log(`Skipping ${repository}`);
+      await fs.appendFile(`./${SKIPPED_REPOS_PATH}`, `${repository}\n`);
+      return;
+    } else if (action === "proceed") {
+      createCommitIfNeeded("manual changes");
+      log("Making a PR anyway");
+      break;
+    } else if (action === "lttf") {
+      createCommitIfNeeded("manual changes");
+      log("Running lint-to-the-future...");
+      runInRepo("pnpm", "lttf:ignore");
+      continue;
+    } else if (action === "retry") {
+      createCommitIfNeeded("manual changes");
+      log(`Retrying ${repository}`);
+      continue;
     }
   }
 
-  const anyChanges =
-    execFileSync(
-      "git",
-      ["-C", `./${WORKSPACE_DIR}/repo`, "status", "--porcelain"],
-      {
-        encoding: "utf8",
-      }
-    ).trim() !== "";
-
-  if (!anyChanges) {
+  if (!anyNewCommits(startingCommit)) {
     log(`✅ '${repository}' is already up to date`);
   }
 
   if (ask) {
     log(`'${repository}' done`);
     log(
-      `Review result in ./${WORKSPACE_DIR}/repo. Press q to exit, or any other key to continue`
+      `Review result in ./${WORKSPACE_DIR}/repo. Press [c] or [enter] to continue, or [q] to quit.`
     );
-    const key = await waitForKeypress();
+    const action = await waitForAction(ASK_ACTIONS);
 
-    if (key === "q") {
+    createCommitIfNeeded("manual changes");
+
+    if (action === "quit") {
       log(`Exiting...`);
       exit(1);
     }
   } else if (dryRun) {
     log(`[dry-run] '${repository}' done`);
     log(
-      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press n to try next repo. Any other key to quit.`
+      `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
-    const key = await waitForKeypress();
-    if (key === "n") {
+    const action = await waitForAction(DRY_RUN_ACTIONS);
+
+    createCommitIfNeeded("manual changes");
+
+    if (action === "next") {
       return;
     } else {
       exit(1);
     }
   }
 
-  if (!anyChanges) {
+  if (!anyNewCommits(startingCommit)) {
     return;
   }
 
   log(`Updating '${branch}' branch for '${repository}'`);
-
-  if (baseBranch !== branch) {
-    runInRepo("git", "checkout", "-b", branch);
-  }
-
-  runInRepo("git", "add", ".");
-  runInRepo("git", "commit", "-q", "-m", message);
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
+  // Don't create a PR when updating an existing branch
   if (baseBranch === branch) {
     return;
   }
 
-  try {
-    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
-      owner,
-      repo: repoNoOwner,
-      title: message,
-      head: branch,
-      base: defaultBranch,
-      body,
-    });
-    log(`✅ PR created for '${repository}': ${response.data.html_url}`);
-  } catch (error) {
-    const errorMessage = error.response?.data?.errors?.[0]?.message;
+  const [owner, repoNoOwner] = repository.split("/");
 
-    if (errorMessage && /A pull request already exists/.test(errorMessage)) {
-      log(
-        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
-      );
-    } else {
-      console.error(error);
-      throw `❓ Failed to create PR for '${repository}'`;
-    }
-  }
+  await createPullRequest(
+    owner,
+    repoNoOwner,
+    message,
+    branch,
+    baseBranch,
+    body,
+    repository
+  );
 }
 
 async function massPR(args) {
   await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   await fs.mkdir(`./${WORKSPACE_DIR}`);
+
   for (const repository of args.repositories) {
-    await makePR({ ...args, repository });
+    await processRepository({ ...args, repository });
   }
+
   try {
     await fs.access(`./${SKIPPED_REPOS_PATH}`);
   } catch {
     // no skipped repos so we can proceed to clean up
     await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   }
-  log("Complete 🚀");
+
+  log("All done! 🚀");
   exit(0);
 }
 

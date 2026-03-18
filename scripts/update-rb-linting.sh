@@ -33,8 +33,11 @@ fi
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 
-bundle update
+if [ ! -f "Gemfile.lock" ]; then
+  bundle install
+fi
 bundle update --bundler
+bundle update --all
 
 bundle lock --add-platform ruby
 bundle lock --remove-platform x86_64-linux &> /dev/null || true
@@ -50,9 +53,6 @@ test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_help
 
 # Remove unnecessary `js: true` flags in specs
 test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
-
-# Remove unnecessary `type: :system` flags in specs
-test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, type: :system do/ do/'
 
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")

@@ -1,0 +1,180 @@
+import { execFileSync } from "node:child_process";
+import { env } from "node:process";
+import { setTimeout as wait } from "node:timers/promises";
+import readline from "readline";
+import { octokit } from "./octokit.js";
+
+export const WORKSPACE_DIR = "mass-pr-workspace";
+export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
+const RESET = "\x1b[0m";
+const MASS_PR_LABEL = "mass-pr";
+const LABEL_RETRY_COUNT = 2;
+const LABEL_RETRY_DELAY_MS = 2_000;
+
+export function log(...message) {
+  const green = "\x1b[32m";
+  // eslint-disable-next-line no-console
+  console.log(`${green}[mass-pr]${RESET}`, ...message);
+}
+
+export function logError(...message) {
+  const red = "\x1b[31m";
+  // eslint-disable-next-line no-console
+  console.error(`${red}[mass-pr]${RESET}`, ...message);
+}
+
+export function run(cmd, ...args) {
+  let opts = {};
+
+  while (typeof args.at(-1) === "object") {
+    Object.assign(opts, args.pop());
+  }
+
+  if (!opts.encoding) {
+    opts.stdio = "inherit";
+  }
+
+  if (cmd.endsWith(".rb")) {
+    return execFileSync("ruby", [cmd, ...args], opts)?.trim();
+  } else {
+    return execFileSync(cmd, args, opts)?.trim();
+  }
+}
+
+export function runInRepo(cmd, ...args) {
+  return run(cmd, ...args, { cwd: `./${WORKSPACE_DIR}/repo` });
+}
+
+export async function waitForKeypress() {
+  readline.emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+
+  return new Promise((resolve) =>
+    process.stdin.once("keypress", (data, key) => {
+      process.stdin.setRawMode(false);
+      resolve(key.name);
+    })
+  );
+}
+
+export function cleanEnv() {
+  const result = { ...env };
+
+  // Prevent the `mass-pr` package.json from interfering with scripts
+  for (const key of Object.keys(result)) {
+    if (key.startsWith("npm_")) {
+      delete result[key];
+    }
+  }
+
+  return result;
+}
+
+export function anyNewCommits(baseRef = "@{upstream}") {
+  return (
+    runInRepo("git", "rev-list", "--max-count=1", `${baseRef}..HEAD`, {
+      encoding: "utf8",
+    }) !== ""
+  );
+}
+
+function anyChanges() {
+  return runInRepo("git", "status", "--porcelain", { encoding: "utf8" }) !== "";
+}
+
+export function createCommitIfNeeded(message) {
+  if (!anyChanges()) {
+    return;
+  }
+
+  runInRepo("git", "add", ".");
+  runInRepo("git", "commit", "-q", "-m", message);
+}
+
+export function cloneRepo(repository, baseBranch, mode) {
+  const url =
+    mode === "ssh"
+      ? `git@github.com:${repository}`
+      : `https://github.com/${repository}`;
+
+  let args = ["git", "clone", "-q", "--depth", "1"];
+
+  if (baseBranch) {
+    args.push("--branch", baseBranch);
+  }
+
+  args.push(url, `${WORKSPACE_DIR}/repo`);
+
+  try {
+    run(...args);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function addPullRequestLabel(owner, repo, issueNumber, attempt = 0) {
+  try {
+    await octokit.request(
+      "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
+      {
+        owner,
+        repo,
+        issue_number: issueNumber,
+        labels: [MASS_PR_LABEL],
+      }
+    );
+  } catch (error) {
+    if (attempt === LABEL_RETRY_COUNT) {
+      throw error;
+    }
+
+    await wait(LABEL_RETRY_DELAY_MS);
+    await addPullRequestLabel(owner, repo, issueNumber, attempt + 1);
+  }
+}
+
+export async function createPullRequest(
+  owner,
+  repo,
+  title,
+  head,
+  base,
+  body,
+  repository
+) {
+  let pullRequest;
+
+  try {
+    const response = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+      owner,
+      repo,
+      title,
+      head,
+      base,
+      body,
+    });
+    pullRequest = response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.errors?.[0]?.message;
+
+    if (errorMessage && /A pull request already exists/.test(errorMessage)) {
+      log(
+        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+      );
+      return;
+    } else {
+      logError(error);
+      throw `❓ Failed to create PR for '${repository}'`;
+    }
+  }
+
+  try {
+    await addPullRequestLabel(owner, repo, pullRequest.number);
+  } catch (error) {
+    logError(error);
+    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for '${repository}'`;
+  }
+
+  log(`✅ PR ready for '${repository}': ${pullRequest.html_url}`);
+}
