@@ -33,6 +33,9 @@ fi
 
 sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
 
+if [ ! -f "Gemfile.lock" ]; then
+  bundle install
+fi
 bundle update --bundler
 bundle update --all
 
