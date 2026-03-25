@@ -5,6 +5,11 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+run_jq_on_package_json() {
+  jq -f /dev/stdin repo/package.json > repo/temp.json
+  mv repo/temp.json repo/package.json
+}
+
 if [ ! -d "discourse-theme-skeleton" ]; then
   git clone --quiet --depth 1 https://github.com/discourse/discourse-theme-skeleton discourse-theme-skeleton
 fi
@@ -32,19 +37,20 @@ fi
 
 # Use the current js linting setup
 echo "Updating linting dependencies setup in package.json..."
-jq '.private = true |
+run_jq_on_package_json <<'JQ'
+.private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "2.43.0",
+    "@discourse/lint-configs": "2.44.1",
     "@glint/ember-tsc": "1.1.1",
     "concurrently": "^9.2.1",
-    "discourse": "npm:@discourse/types@2026.3.0-887c5be4",
+    "discourse": "npm:@discourse/types@2026.3.0-d02b2966",
     "ember-template-lint": "7.9.3",
     "eslint": "9.39.2",
     "lint-to-the-future": "^2.6.4",
     "lint-to-the-future-eslint": "^3.3.0",
     "prettier": "3.8.1",
-    "stylelint": "17.4.0"
+    "stylelint": "17.5.0"
   } |
   # Sort deps alphabetically
   .devDependencies = (.devDependencies | to_entries | sort_by(.key) | from_entries) |
@@ -63,41 +69,42 @@ jq '.private = true |
 
   # Have these fields first
   { private, devDependencies, scripts } + del(.private // .devDependencies // .scripts)
-' repo/package.json > repo/temp.json
-mv repo/temp.json repo/package.json
+JQ
 
 if [ -f "repo/plugin.rb" ]; then
-  jq '.scripts *= {
+  run_jq_on_package_json <<'JQ'
+.scripts *= {
     "lint": "concurrently \"pnpm:lint:*(!fix)\" --names \"lint:\"",
     "lint:fix": "concurrently \"pnpm:lint:*:fix\" --names \"fix:\"",
-    "lint:css": "pnpm stylelint assets/stylesheets/**/*.scss --allow-empty-input",
-    "lint:css:fix": "pnpm stylelint assets/stylesheets/**/*.scss --fix --allow-empty-input",
+    "lint:css": "pnpm stylelint 'assets/stylesheets/**/*.scss' --allow-empty-input",
+    "lint:css:fix": "pnpm stylelint 'assets/stylesheets/**/*.scss' --fix --allow-empty-input",
     "lint:js": "eslint {assets,admin/assets,test}/javascripts --cache --no-error-on-unmatched-pattern",
     "lint:js:fix": "eslint {assets,admin/assets,test}/javascripts --fix --no-error-on-unmatched-pattern",
-    "lint:hbs": "ember-template-lint {assets,admin/assets,test}/javascripts/**/*.gjs --no-error-on-unmatched-pattern",
-    "lint:hbs:fix": "ember-template-lint {assets,admin/assets,test}/javascripts/**/*.gjs --fix --no-error-on-unmatched-pattern",
-    "lint:prettier": "pnpm prettier assets/stylesheets/**/*.scss {assets,admin/assets,test}/javascripts/**/*.{js,gjs} --check --no-error-on-unmatched-pattern",
-    "lint:prettier:fix": "pnpm prettier assets/stylesheets/**/*.scss {assets,admin/assets,test}/javascripts/**/*.{js,gjs} -w --no-error-on-unmatched-pattern",
+    "lint:hbs": "ember-template-lint '{assets,admin/assets,test}/javascripts/**/*.gjs' --no-error-on-unmatched-pattern",
+    "lint:hbs:fix": "ember-template-lint '{assets,admin/assets,test}/javascripts/**/*.gjs' --fix --no-error-on-unmatched-pattern",
+    "lint:prettier": "pnpm prettier 'assets/stylesheets/**/*.scss' '{assets,admin/assets,test}/javascripts/**/*.{js,gjs}' --check --no-error-on-unmatched-pattern",
+    "lint:prettier:fix": "pnpm prettier 'assets/stylesheets/**/*.scss' '{assets,admin/assets,test}/javascripts/**/*.{js,gjs}' -w --no-error-on-unmatched-pattern",
     "lint:types": "ember-tsc -b",
     "lttf:ignore": "lint-to-the-future ignore"
-  }' repo/package.json > repo/temp.json
-  mv repo/temp.json repo/package.json
+  }
+JQ
 else # Theme
-  jq '.scripts *= {
+  run_jq_on_package_json <<'JQ'
+.scripts *= {
     "lint": "concurrently \"pnpm:lint:*(!fix)\" --names \"lint:\"",
     "lint:fix": "concurrently \"pnpm:lint:*:fix\" --names \"fix:\"",
-    "lint:css": "pnpm stylelint {javascripts,desktop,mobile,common,scss}/**/*.scss --allow-empty-input",
-    "lint:css:fix": "pnpm stylelint {javascripts,desktop,mobile,common,scss}/**/*.scss --fix --allow-empty-input",
+    "lint:css": "pnpm stylelint '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' --allow-empty-input",
+    "lint:css:fix": "pnpm stylelint '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' --fix --allow-empty-input",
     "lint:js": "eslint {javascripts,test} --cache --no-error-on-unmatched-pattern",
     "lint:js:fix": "eslint {javascripts,test} --fix --no-error-on-unmatched-pattern",
-    "lint:hbs": "ember-template-lint javascripts/**/*.gjs --no-error-on-unmatched-pattern",
-    "lint:hbs:fix": "ember-template-lint javascripts/**/*.gjs --fix --no-error-on-unmatched-pattern",
-    "lint:prettier": "pnpm prettier {javascripts,desktop,mobile,common,scss}/**/*.scss {javascripts,test}/**/*.{js,gjs} --check --no-error-on-unmatched-pattern",
-    "lint:prettier:fix": "pnpm prettier {javascripts,desktop,mobile,common,scss}/**/*.scss {javascripts,test}/**/*.{js,gjs} -w --no-error-on-unmatched-pattern",
+    "lint:hbs": "ember-template-lint 'javascripts/**/*.gjs' --no-error-on-unmatched-pattern",
+    "lint:hbs:fix": "ember-template-lint 'javascripts/**/*.gjs' --fix --no-error-on-unmatched-pattern",
+    "lint:prettier": "pnpm prettier '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' '{javascripts,test}/**/*.{js,gjs}' --check --no-error-on-unmatched-pattern",
+    "lint:prettier:fix": "pnpm prettier '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' '{javascripts,test}/**/*.{js,gjs}' -w --no-error-on-unmatched-pattern",
     "lint:types": "ember-tsc -b",
     "lttf:ignore": "lint-to-the-future ignore"
-  }' repo/package.json > repo/temp.json
-  mv repo/temp.json repo/package.json
+  }
+JQ
 fi
 
 # Copy these files from skeleton if they do not already exist
