@@ -10,6 +10,7 @@ import {
   cloneRepo,
   createCommitIfNeeded,
   createPullRequest,
+  isRepoPrivate,
   log,
   logError,
   run,
@@ -47,11 +48,15 @@ async function waitForAction(actions) {
   }
 }
 
-function runScript(repository, script) {
+function runScript(repository, script, isPrivate) {
   try {
     run(`../${script}`, {
       cwd: `./${WORKSPACE_DIR}`,
-      env: { ...cleanEnv(), PACKAGE_NAME: repository.split("/")[1] },
+      env: {
+        ...cleanEnv(),
+        PACKAGE_NAME: repository.split("/")[1],
+        PRIVATE_REPO: isPrivate ? "1" : "0",
+      },
     });
 
     return true;
@@ -101,10 +106,16 @@ async function processRepository({
     encoding: "utf8",
   });
 
+  const [owner, repoNoOwner] = repository.split("/");
+
   log(`Running '${script}' for '${repository}'...`);
 
   while (true) {
-    const succeeded = runScript(repository, script);
+    const succeeded = runScript(
+      repository,
+      script,
+      isRepoPrivate(owner, repoNoOwner)
+    );
 
     createCommitIfNeeded("automatic changes");
 
@@ -184,8 +195,6 @@ async function processRepository({
   if (baseBranch === branch) {
     return;
   }
-
-  const [owner, repoNoOwner] = repository.split("/");
 
   await createPullRequest(
     owner,
