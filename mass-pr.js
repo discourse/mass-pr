@@ -124,7 +124,7 @@ async function processRepository({
     }
 
     log(
-      "[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
+      "\x07[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
     );
 
     const action = await waitForAction(SCRIPT_ACTIONS);
@@ -222,7 +222,7 @@ async function massPR(args) {
     await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   }
 
-  log("All done! 🚀");
+  log("\x07All done! 🚀");
   exit(0);
 }
 
