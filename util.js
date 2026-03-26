@@ -237,11 +237,11 @@ export function runScriptVerbose(repository, script, isPrivate) {
     run(`../${script}`, scriptOpts(repository, isPrivate));
     return true;
   } catch (err) {
-    logError(`\nScript run failed for ${repository}`);
-
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
     }
+
+    logError(`Script run failed for ${repository}`);
 
     if (!process.stdin.isTTY) {
       throw err;
@@ -262,7 +262,6 @@ export async function runScriptQuiet(repository, script, isPrivate, message) {
     return true;
   } catch (err) {
     stopEllipsisAnimation();
-    logError(`Script run failed for ${repository}`);
 
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
@@ -274,6 +273,8 @@ export async function runScriptQuiet(repository, script, isPrivate, message) {
         process.stderr.write(err.stderr);
       }
     }
+
+    logError(`Script run failed for ${repository}`);
 
     if (!process.stdin.isTTY) {
       throw err;
