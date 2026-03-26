@@ -48,16 +48,23 @@ async function waitForAction(actions) {
   }
 }
 
-function runScript(repository, script, isPrivate) {
+function runScript(repository, script, isPrivate, verbose) {
+  const runOpts = {
+    cwd: `./${WORKSPACE_DIR}`,
+    env: {
+      ...cleanEnv(),
+      PACKAGE_NAME: repository.split("/")[1],
+      PRIVATE_REPO: isPrivate ? "1" : "0",
+    },
+  };
+
+  if (!verbose) {
+    runOpts.encoding = "utf8";
+    runOpts.stdio = ["inherit", "pipe", "pipe"];
+  }
+
   try {
-    run(`../${script}`, {
-      cwd: `./${WORKSPACE_DIR}`,
-      env: {
-        ...cleanEnv(),
-        PACKAGE_NAME: repository.split("/")[1],
-        PRIVATE_REPO: isPrivate ? "1" : "0",
-      },
-    });
+    run(`../${script}`, runOpts);
 
     return true;
   } catch (err) {
@@ -65,6 +72,13 @@ function runScript(repository, script, isPrivate) {
 
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
+    } else if (!verbose) {
+      if (err.stdout) {
+        process.stdout.write(err.stdout);
+      }
+      if (err.stderr) {
+        process.stderr.write(err.stderr);
+      }
     }
 
     if (!process.stdin.isTTY) {
@@ -85,6 +99,7 @@ async function processRepository({
   repository,
   ask,
   dryRun,
+  verbose,
 }) {
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
@@ -114,7 +129,8 @@ async function processRepository({
     const succeeded = runScript(
       repository,
       script,
-      isRepoPrivate(owner, repoNoOwner)
+      isRepoPrivate(owner, repoNoOwner),
+      verbose
     );
 
     createCommitIfNeeded("automatic changes");
@@ -271,6 +287,11 @@ yargs(hideBin(process.argv))
         .option("dry-run", {
           type: "boolean",
           description: "Abort before pushing changes to GitHub",
+        })
+        .option("verbose", {
+          type: "boolean",
+          default: false,
+          description: "Show full script output",
         })
         .positional("repositories", {
           describe:
