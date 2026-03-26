@@ -176,12 +176,12 @@ export async function createPullRequest(
 
     if (errorMessage && /A pull request already exists/.test(errorMessage)) {
       log(
-        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+        `✅ PR already exists for ${repository}: https://github.com/${repository}/pulls`
       );
       return;
     } else {
       logError(error);
-      throw `❓ Failed to create PR for '${repository}'`;
+      throw `❓ Failed to create PR for ${repository}`;
     }
   }
 
@@ -189,10 +189,10 @@ export async function createPullRequest(
     await addPullRequestLabel(owner, repo, pullRequest.number);
   } catch (error) {
     logError(error);
-    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for '${repository}'`;
+    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for ${repository}`;
   }
 
-  log(`✅ PR ready for '${repository}': ${pullRequest.html_url}`);
+  log(`✅ PR ready for ${repository}: ${pullRequest.html_url}`);
 }
 
 export async function isRepoPrivate(owner, repo) {
@@ -237,7 +237,7 @@ export function runScriptVerbose(repository, script, isPrivate) {
     run(`../${script}`, scriptOpts(repository, isPrivate));
     return true;
   } catch (err) {
-    logError(`\nScript run failed for '${repository}'`);
+    logError(`\nScript run failed for ${repository}`);
 
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
@@ -262,7 +262,7 @@ export async function runScriptQuiet(repository, script, isPrivate, message) {
     return true;
   } catch (err) {
     stopEllipsisAnimation();
-    logError(`Script run failed for '${repository}'`);
+    logError(`Script run failed for ${repository}`);
 
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
