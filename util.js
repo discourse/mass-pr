@@ -43,11 +43,12 @@ function parseRunArgs(cmd, args) {
 export function run(cmd, ...args) {
   const [file, fileArgs, opts] = parseRunArgs(cmd, args);
 
-  if (!opts.encoding) {
+  if (!opts.encoding && !opts.stdio) {
     opts.stdio = "inherit";
   }
 
-  return execFileSync(file, fileArgs, opts)?.trim();
+  const result = execFileSync(file, fileArgs, opts);
+  return typeof result === "string" ? result.trim() : result;
 }
 
 const execFileAsync = promisify(execFile);
@@ -106,7 +107,7 @@ export function createCommitIfNeeded(message) {
   runInRepo("git", "commit", "-q", "-m", message);
 }
 
-export function cloneRepo(repository, baseBranch, mode) {
+export function cloneRepo(repository, baseBranch, mode, verbose = true) {
   const url =
     mode === "ssh"
       ? `git@github.com:${repository}`
@@ -121,7 +122,7 @@ export function cloneRepo(repository, baseBranch, mode) {
   args.push(url, `${WORKSPACE_DIR}/repo`);
 
   try {
-    run(...args);
+    run(...args, verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] });
     return true;
   } catch {
     return false;

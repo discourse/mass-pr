@@ -61,7 +61,7 @@ async function processRepository({
 }) {
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
-  if (!cloneRepo(repository, baseBranch, mode)) {
+  if (!cloneRepo(repository, baseBranch, mode, verbose)) {
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
@@ -72,7 +72,13 @@ async function processRepository({
   log(`Base branch: ${baseBranch}`);
 
   if (baseBranch !== branch) {
-    runInRepo("git", "checkout", "-b", branch);
+    runInRepo(
+      "git",
+      "checkout",
+      "-b",
+      branch,
+      verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+    );
   }
 
   const startingCommit = runInRepo("git", "rev-parse", "HEAD", {
@@ -124,7 +130,11 @@ async function processRepository({
     } else if (action === "lttf") {
       createCommitIfNeeded("manual changes");
       log("Running lint-to-the-future...");
-      runInRepo("pnpm", "lttf:ignore");
+      runInRepo(
+        "pnpm",
+        "lttf:ignore",
+        verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+      );
       continue;
     } else if (action === "retry") {
       createCommitIfNeeded("manual changes");
@@ -171,7 +181,15 @@ async function processRepository({
   }
 
   log(`Updating '${branch}' branch for ${repository}`);
-  runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
+  runInRepo(
+    "git",
+    "push",
+    "--no-progress",
+    "-f",
+    "origin",
+    branch,
+    verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+  );
 
   // Don't create a PR when updating an existing branch
   if (baseBranch === branch) {
