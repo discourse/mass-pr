@@ -178,3 +178,12 @@ export async function createPullRequest(
 
   log(`✅ PR ready for '${repository}': ${pullRequest.html_url}`);
 }
+
+export async function isRepoPrivate(owner, repo) {
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
+    owner,
+    repo,
+  });
+
+  return data.private;
+}
