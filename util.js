@@ -1,7 +1,6 @@
-import { execFile, execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { env } from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
-import { promisify } from "node:util";
 import readline from "readline";
 import { octokit } from "./octokit.js";
 
@@ -51,10 +50,27 @@ export function run(cmd, ...args) {
   return typeof result === "string" ? result.trim() : result;
 }
 
-const execFileAsync = promisify(execFile);
+export function runAsync(cmd, ...args) {
+  const [file, fileArgs, opts] = parseRunArgs(cmd, args);
 
-export async function runAsync(cmd, ...args) {
-  return execFileAsync(...parseRunArgs(cmd, args));
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, fileArgs, opts);
+    const output = [];
+
+    child.stdout?.on("data", (chunk) => output.push(chunk));
+    child.stderr?.on("data", (chunk) => output.push(chunk));
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        const err = new Error(`Process exited with code ${code}`);
+        err.output = Buffer.concat(output).toString("utf8");
+        reject(err);
+      }
+    });
+  });
 }
 
 export function runInRepo(cmd, ...args) {
@@ -221,9 +237,10 @@ export function startSpinner(prefix) {
   };
 }
 
-function scriptOpts(repository, isPrivate) {
+function scriptOpts(repository, isPrivate, verbose = true) {
   return {
     cwd: `./${WORKSPACE_DIR}`,
+    encoding: verbose ? undefined : "utf8",
     env: {
       ...cleanEnv(),
       PACKAGE_NAME: repository.split("/")[1],
@@ -257,7 +274,7 @@ export async function runScriptQuiet(repository, script, isPrivate, message) {
   );
 
   try {
-    await runAsync(`../${script}`, scriptOpts(repository, isPrivate));
+    await runAsync(`../${script}`, scriptOpts(repository, isPrivate, false));
     stopEllipsisAnimation();
     return true;
   } catch (err) {
@@ -265,13 +282,8 @@ export async function runScriptQuiet(repository, script, isPrivate, message) {
 
     if (err.code === "ENOENT") {
       logError(`'${script}' doesn't exist`);
-    } else {
-      if (err.stdout) {
-        process.stdout.write(err.stdout);
-      }
-      if (err.stderr) {
-        process.stderr.write(err.stderr);
-      }
+    } else if (err.output) {
+      process.stdout.write(err.output);
     }
 
     logError(`Script run failed for ${repository}`);
