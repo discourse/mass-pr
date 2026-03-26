@@ -13,11 +13,17 @@ const ELLIPSIS_FRAMES = [".  ", ".. ", "...", "   "];
 const ELLIPSIS_INTERVAL = 400;
 const TEXT_RESET = "\x1b[0m";
 const TEXT_GREEN = "\x1b[32m";
+const TEXT_YELLOW = "\x1b[33m";
 const TEXT_RED = "\x1b[31m";
 
 export function log(...message) {
   // eslint-disable-next-line no-console
   console.log(`${TEXT_GREEN}[mass-pr]${TEXT_RESET}`, ...message);
+}
+
+export function logWarning(...message) {
+  // eslint-disable-next-line no-console
+  console.error(`${TEXT_YELLOW}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
 export function logError(...message) {
@@ -211,13 +217,13 @@ export async function createPullRequest(
   log(`✅ PR ready for ${repository}: ${pullRequest.html_url}`);
 }
 
-export async function isRepoPrivate(owner, repo) {
+export async function getRepoInfo(owner, repo) {
   const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
     owner,
     repo,
   });
 
-  return data.private;
+  return { isPrivate: data.private, isArchived: data.archived };
 }
 
 export function startSpinner(prefix) {

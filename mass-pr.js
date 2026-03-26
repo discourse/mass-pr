@@ -9,8 +9,9 @@ import {
   cloneRepo,
   createCommitIfNeeded,
   createPullRequest,
-  isRepoPrivate,
+  getRepoInfo,
   log,
+  logWarning,
   runInRepo,
   runScriptQuiet,
   runScriptVerbose,
@@ -86,10 +87,15 @@ async function processRepository({
   });
 
   const [owner, repoNoOwner] = repository.split("/");
+  const { isPrivate, isArchived } = await getRepoInfo(owner, repoNoOwner);
+
+  if (isArchived) {
+    logWarning(`Skipping ${repository} - repository is archived`);
+    return;
+  }
 
   while (true) {
     const runMessage = `${repository}`;
-    const isPrivate = await isRepoPrivate(owner, repoNoOwner);
     let succeeded;
 
     if (verbose) {
