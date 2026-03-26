@@ -1,26 +1,29 @@
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { env } from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
+import { promisify } from "node:util";
 import readline from "readline";
 import { octokit } from "./octokit.js";
 
 export const WORKSPACE_DIR = "mass-pr-workspace";
 export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
-const RESET = "\x1b[0m";
 const MASS_PR_LABEL = "mass-pr";
 const LABEL_RETRY_COUNT = 2;
 const LABEL_RETRY_DELAY_MS = 2_000;
+const ELLIPSIS_FRAMES = [".  ", ".. ", "...", "   "];
+const ELLIPSIS_INTERVAL = 400;
+const TEXT_RESET = "\x1b[0m";
+const TEXT_GREEN = "\x1b[32m";
+const TEXT_RED = "\x1b[31m";
 
 export function log(...message) {
-  const green = "\x1b[32m";
   // eslint-disable-next-line no-console
-  console.log(`${green}[mass-pr]${RESET}`, ...message);
+  console.log(`${TEXT_GREEN}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
 export function logError(...message) {
-  const red = "\x1b[31m";
   // eslint-disable-next-line no-console
-  console.error(`${red}[mass-pr]${RESET}`, ...message);
+  console.error(`${TEXT_RED}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
 export function run(cmd, ...args) {
@@ -39,6 +42,22 @@ export function run(cmd, ...args) {
   } else {
     return execFileSync(cmd, args, opts)?.trim();
   }
+}
+
+const execFileAsync = promisify(execFile);
+
+export async function runAsync(cmd, ...args) {
+  let opts = {};
+
+  while (typeof args.at(-1) === "object") {
+    Object.assign(opts, args.pop());
+  }
+
+  const [file, fileArgs] = cmd.endsWith(".rb")
+    ? ["ruby", [cmd, ...args]]
+    : [cmd, args];
+
+  return execFileAsync(file, fileArgs, opts);
 }
 
 export function runInRepo(cmd, ...args) {
@@ -186,4 +205,84 @@ export async function isRepoPrivate(owner, repo) {
   });
 
   return data.private;
+}
+
+export function startSpinner(prefix) {
+  let i = 0;
+  const frame = () =>
+    `\r${prefix}${ELLIPSIS_FRAMES[i++ % ELLIPSIS_FRAMES.length]}\n`;
+
+  process.stdout.write(frame());
+  const id = setInterval(
+    () => process.stdout.write(`\x1b[A${frame()}`),
+    ELLIPSIS_INTERVAL
+  );
+
+  return () => {
+    clearInterval(id);
+    process.stdout.write(`\x1b[A\r${prefix}... ${TEXT_GREEN}✔${TEXT_RESET}\n`);
+  };
+}
+
+function scriptOpts(repository, isPrivate) {
+  return {
+    cwd: `./${WORKSPACE_DIR}`,
+    env: {
+      ...cleanEnv(),
+      PACKAGE_NAME: repository.split("/")[1],
+      PRIVATE_REPO: isPrivate ? "1" : "0",
+    },
+  };
+}
+
+export function runScriptVerbose(repository, script, isPrivate) {
+  try {
+    run(`../${script}`, scriptOpts(repository, isPrivate));
+    return true;
+  } catch (err) {
+    logError(`\nScript run failed for '${repository}'`);
+
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    }
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
+}
+
+export async function runScriptQuiet(repository, script, isPrivate, message) {
+  const green = "\x1b[32m";
+  const stopEllipsisAnimation = startSpinner(
+    `${green}[mass-pr]${TEXT_RESET} ${message}`
+  );
+
+  try {
+    await runAsync(`../${script}`, scriptOpts(repository, isPrivate));
+    stopEllipsisAnimation();
+    return true;
+  } catch (err) {
+    stopEllipsisAnimation();
+    logError(`Script run failed for '${repository}'`);
+
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    } else {
+      if (err.stdout) {
+        process.stdout.write(err.stdout);
+      }
+      if (err.stderr) {
+        process.stderr.write(err.stderr);
+      }
+    }
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
 }

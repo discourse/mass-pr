@@ -6,15 +6,14 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import {
   anyNewCommits,
-  cleanEnv,
   cloneRepo,
   createCommitIfNeeded,
   createPullRequest,
   isRepoPrivate,
   log,
-  logError,
-  run,
   runInRepo,
+  runScriptQuiet,
+  runScriptVerbose,
   SKIPPED_REPOS_PATH,
   waitForKeypress,
   WORKSPACE_DIR,
@@ -45,47 +44,6 @@ async function waitForAction(actions) {
     if (action) {
       return action;
     }
-  }
-}
-
-function runScript(repository, script, isPrivate, verbose) {
-  const runOpts = {
-    cwd: `./${WORKSPACE_DIR}`,
-    env: {
-      ...cleanEnv(),
-      PACKAGE_NAME: repository.split("/")[1],
-      PRIVATE_REPO: isPrivate ? "1" : "0",
-    },
-  };
-
-  if (!verbose) {
-    runOpts.encoding = "utf8";
-    runOpts.stdio = ["inherit", "pipe", "pipe"];
-  }
-
-  try {
-    run(`../${script}`, runOpts);
-
-    return true;
-  } catch (err) {
-    log(`\nScript run failed for '${repository}'`);
-
-    if (err.code === "ENOENT") {
-      logError(`'${script}' doesn't exist`);
-    } else if (!verbose) {
-      if (err.stdout) {
-        process.stdout.write(err.stdout);
-      }
-      if (err.stderr) {
-        process.stderr.write(err.stderr);
-      }
-    }
-
-    if (!process.stdin.isTTY) {
-      throw err;
-    }
-
-    return false;
   }
 }
 
@@ -123,15 +81,23 @@ async function processRepository({
 
   const [owner, repoNoOwner] = repository.split("/");
 
-  log(`Running '${script}' for '${repository}'...`);
+  const runMessage = `Running '${script}' for ${repository}`;
 
   while (true) {
-    const succeeded = runScript(
-      repository,
-      script,
-      isRepoPrivate(owner, repoNoOwner),
-      verbose
-    );
+    const isPrivate = await isRepoPrivate(owner, repoNoOwner);
+    let succeeded;
+
+    if (verbose) {
+      log(`${runMessage}...`);
+      succeeded = runScriptVerbose(repository, script, isPrivate);
+    } else {
+      succeeded = await runScriptQuiet(
+        repository,
+        script,
+        isPrivate,
+        runMessage
+      );
+    }
 
     createCommitIfNeeded("automatic changes");
 
@@ -168,11 +134,11 @@ async function processRepository({
   }
 
   if (!anyNewCommits(startingCommit)) {
-    log(`✅ '${repository}' is already up to date`);
+    log(`✅ ${repository} is already up to date`);
   }
 
   if (ask) {
-    log(`'${repository}' done`);
+    log(`${repository} done`);
     log(
       `Review result in ./${WORKSPACE_DIR}/repo. Press [c] or [enter] to continue, or [q] to quit.`
     );
@@ -185,7 +151,7 @@ async function processRepository({
       exit(1);
     }
   } else if (dryRun) {
-    log(`[dry-run] '${repository}' done`);
+    log(`[dry-run] ${repository} done`);
     log(
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
@@ -204,7 +170,7 @@ async function processRepository({
     return;
   }
 
-  log(`Updating '${branch}' branch for '${repository}'`);
+  log(`Updating '${branch}' branch for ${repository}`);
   runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
 
   // Don't create a PR when updating an existing branch
