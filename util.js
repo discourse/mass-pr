@@ -7,8 +7,8 @@ import { octokit } from "./octokit.js";
 export const WORKSPACE_DIR = "mass-pr-workspace";
 export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
 const MASS_PR_LABEL = "mass-pr";
-const LABEL_RETRY_COUNT = 2;
-const LABEL_RETRY_DELAY_MS = 2_000;
+const RETRY_COUNT = 2;
+const RETRY_DELAY_MS = 2_000;
 const ELLIPSIS_FRAMES = [".  ", ".. ", "...", "   "];
 const ELLIPSIS_INTERVAL = 400;
 const TEXT_RESET = "\x1b[0m";
@@ -163,11 +163,11 @@ async function addPullRequestLabel(owner, repo, issueNumber, attempt = 0) {
       }
     );
   } catch (error) {
-    if (attempt === LABEL_RETRY_COUNT) {
+    if (attempt === RETRY_COUNT) {
       throw error;
     }
 
-    await wait(LABEL_RETRY_DELAY_MS);
+    await wait(RETRY_DELAY_MS);
     await addPullRequestLabel(owner, repo, issueNumber, attempt + 1);
   }
 }
@@ -179,7 +179,8 @@ export async function createPullRequest(
   head,
   base,
   body,
-  repository
+  repository,
+  attempt = 0
 ) {
   let pullRequest;
 
@@ -201,10 +202,27 @@ export async function createPullRequest(
         `✅ PR already exists for ${repository}: https://github.com/${repository}/pulls`
       );
       return;
-    } else {
-      logError(error);
-      throw `❓ Failed to create PR for ${repository}`;
     }
+
+    if (error.status >= 500 && attempt < RETRY_COUNT) {
+      logWarning(
+        `Server error (${error.status}) creating PR for ${repository}, retrying...`
+      );
+      await wait(RETRY_DELAY_MS);
+      return createPullRequest(
+        owner,
+        repo,
+        title,
+        head,
+        base,
+        body,
+        repository,
+        attempt + 1
+      );
+    }
+
+    logError(error);
+    throw `❓ Failed to create PR for ${repository}`;
   }
 
   try {
