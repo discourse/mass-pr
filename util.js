@@ -251,9 +251,8 @@ export function runScriptVerbose(repository, script, isPrivate) {
 }
 
 export async function runScriptQuiet(repository, script, isPrivate, message) {
-  const green = "\x1b[32m";
   const stopEllipsisAnimation = startSpinner(
-    `${green}[mass-pr]${TEXT_RESET} ${message}`
+    `${TEXT_GREEN}[mass-pr]${TEXT_RESET} ${message}`
   );
 
   try {
