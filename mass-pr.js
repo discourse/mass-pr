@@ -87,15 +87,14 @@ async function processRepository({
 
   const [owner, repoNoOwner] = repository.split("/");
 
-  const runMessage = `Running '${script}' for ${repository}`;
-
   while (true) {
+    const runMessage = `${repository}`;
     const isPrivate = await isRepoPrivate(owner, repoNoOwner);
     let succeeded;
 
     if (verbose) {
       log(`${runMessage}...`);
-      succeeded = runScriptVerbose(repository, script, isPrivate);
+      succeeded = runScriptVerbose(runMessage, script, isPrivate);
     } else {
       succeeded = await runScriptQuiet(
         repository,
@@ -112,7 +111,7 @@ async function processRepository({
     }
 
     log(
-      "\x07[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
+      "\x07[s] to skip this repo, [l] to run lint-to-the-future ignore, [p] to make a PR anyway, [q] to quit, [r] or [enter] to retry the script"
     );
 
     const action = await waitForAction(SCRIPT_ACTIONS);
@@ -158,8 +157,13 @@ async function processRepository({
   const diffStat = runInRepo("git", "diff", "--shortstat", startingCommit, {
     encoding: "utf8",
   });
+
+  if (verbose) {
+    log(`${prefix}${repository} done`);
+  }
+
   log(
-    `${prefix}${repository} done: ${commitCount} commit${parseInt(commitCount, 10) === 1 ? "" : "s"}${diffStat ? `, ${diffStat}` : ""}`
+    `${commitCount} commit${parseInt(commitCount, 10) === 1 ? "" : "s"}${diffStat ? `, ${diffStat}` : ""}`
   );
 
   let action;
@@ -218,6 +222,8 @@ async function processRepository({
 async function massPR(args) {
   await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   await fs.mkdir(`./${WORKSPACE_DIR}`);
+
+  log(`Running ${args.script}`);
 
   for (const repository of args.repositories) {
     await processRepository({ ...args, repository });
