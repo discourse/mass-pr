@@ -137,7 +137,7 @@ async function processRepository({
       continue;
     } else if (action === "retry") {
       createCommitIfNeeded("manual changes");
-      log(`Retrying ${repository}`);
+      log("Retrying");
       continue;
     }
   }
