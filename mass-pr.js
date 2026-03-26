@@ -20,20 +20,21 @@ import {
 } from "./util.js";
 
 const SCRIPT_ACTIONS = {
-  q: "quit",
-  s: "skip",
   p: "proceed",
   l: "lttf",
   r: "retry",
   return: "retry",
+  s: "skip",
+  q: "quit",
 };
 const ASK_ACTIONS = {
-  q: "quit",
   c: "continue",
   return: "continue",
+  q: "quit",
 };
 const DRY_RUN_ACTIONS = {
   n: "next",
+  return: "next",
   q: "quit",
 };
 
@@ -69,7 +70,6 @@ async function processRepository({
   baseBranch ||= runInRepo("git", "branch", "--show-current", {
     encoding: "utf8",
   });
-  log(`Base branch: ${baseBranch}`);
 
   if (baseBranch !== branch) {
     runInRepo(
@@ -147,33 +147,41 @@ async function processRepository({
     log(`✅ ${repository} is already up to date`);
   }
 
+  const prefix = dryRun ? "[dry-run] " : "";
+  const commitCount = runInRepo(
+    "git",
+    "rev-list",
+    "--count",
+    `${startingCommit}..HEAD`,
+    { encoding: "utf8" }
+  );
+  const diffStat = runInRepo("git", "diff", "--shortstat", startingCommit, {
+    encoding: "utf8",
+  });
+  log(
+    `${prefix}${repository} done: ${commitCount} commit${parseInt(commitCount, 10) === 1 ? "" : "s"}${diffStat ? `, ${diffStat}` : ""}`
+  );
+
+  let action;
   if (ask) {
-    log(`${repository} done`);
     log(
       `Review result in ./${WORKSPACE_DIR}/repo. Press [c] or [enter] to continue, or [q] to quit.`
     );
-    const action = await waitForAction(ASK_ACTIONS);
-
-    createCommitIfNeeded("manual changes");
-
-    if (action === "quit") {
-      log(`Exiting...`);
-      exit(1);
-    }
+    action = await waitForAction(ASK_ACTIONS);
   } else if (dryRun) {
-    log(`[dry-run] ${repository} done`);
     log(
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
-    const action = await waitForAction(DRY_RUN_ACTIONS);
+    action = await waitForAction(DRY_RUN_ACTIONS);
+  }
 
-    createCommitIfNeeded("manual changes");
+  createCommitIfNeeded("manual changes");
 
-    if (action === "next") {
-      return;
-    } else {
-      exit(1);
-    }
+  if (action === "quit") {
+    log("Exiting...");
+    exit(1);
+  } else if (action === "next") {
+    return;
   }
 
   if (!anyNewCommits(startingCommit)) {
