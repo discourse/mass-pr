@@ -56,12 +56,12 @@ test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
 
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
-bundle exec rubocop -A || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
+bundle exec rubocop --color -A || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
 
 # Second stree run to format any rubocop auto-fixes
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
 
 # Second rubocop run to ensure stree didn't introduce any violations
-bundle exec rubocop || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
+bundle exec rubocop --color || (echo "[update-rb-linting] rubocop failed. Correct violations and rerun script." && exit 1)
 
 cd ..

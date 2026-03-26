@@ -243,6 +243,8 @@ function scriptOpts(repository, isPrivate, verbose = true) {
     encoding: verbose ? undefined : "utf8",
     env: {
       ...cleanEnv(),
+      CLICOLOR_FORCE: "1",
+      FORCE_COLOR: "1",
       PACKAGE_NAME: repository.split("/")[1],
       PRIVATE_REPO: isPrivate ? "1" : "0",
     },
