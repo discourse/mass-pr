@@ -26,27 +26,7 @@ export function logError(...message) {
   console.error(`${TEXT_RED}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
-export function run(cmd, ...args) {
-  let opts = {};
-
-  while (typeof args.at(-1) === "object") {
-    Object.assign(opts, args.pop());
-  }
-
-  if (!opts.encoding) {
-    opts.stdio = "inherit";
-  }
-
-  if (cmd.endsWith(".rb")) {
-    return execFileSync("ruby", [cmd, ...args], opts)?.trim();
-  } else {
-    return execFileSync(cmd, args, opts)?.trim();
-  }
-}
-
-const execFileAsync = promisify(execFile);
-
-export async function runAsync(cmd, ...args) {
+function parseRunArgs(cmd, args) {
   let opts = {};
 
   while (typeof args.at(-1) === "object") {
@@ -57,7 +37,23 @@ export async function runAsync(cmd, ...args) {
     ? ["ruby", [cmd, ...args]]
     : [cmd, args];
 
-  return execFileAsync(file, fileArgs, opts);
+  return [file, fileArgs, opts];
+}
+
+export function run(cmd, ...args) {
+  const [file, fileArgs, opts] = parseRunArgs(cmd, args);
+
+  if (!opts.encoding) {
+    opts.stdio = "inherit";
+  }
+
+  return execFileSync(file, fileArgs, opts)?.trim();
+}
+
+const execFileAsync = promisify(execFile);
+
+export async function runAsync(cmd, ...args) {
+  return execFileAsync(...parseRunArgs(cmd, args));
 }
 
 export function runInRepo(cmd, ...args) {
