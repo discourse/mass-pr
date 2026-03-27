@@ -6,35 +6,36 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import {
   anyNewCommits,
-  cleanEnv,
   cloneRepo,
   createCommitIfNeeded,
   createPullRequest,
-  isRepoPrivate,
+  getRepoInfo,
   log,
-  logError,
-  run,
+  logWarning,
   runInRepo,
+  runScriptQuiet,
+  runScriptVerbose,
   SKIPPED_REPOS_PATH,
   waitForKeypress,
   WORKSPACE_DIR,
 } from "./util.js";
 
 const SCRIPT_ACTIONS = {
-  q: "quit",
-  s: "skip",
   p: "proceed",
   l: "lttf",
   r: "retry",
   return: "retry",
+  s: "skip",
+  q: "quit",
 };
 const ASK_ACTIONS = {
-  q: "quit",
   c: "continue",
   return: "continue",
+  q: "quit",
 };
 const DRY_RUN_ACTIONS = {
   n: "next",
+  return: "next",
   q: "quit",
 };
 
@@ -48,33 +49,6 @@ async function waitForAction(actions) {
   }
 }
 
-function runScript(repository, script, isPrivate) {
-  try {
-    run(`../${script}`, {
-      cwd: `./${WORKSPACE_DIR}`,
-      env: {
-        ...cleanEnv(),
-        PACKAGE_NAME: repository.split("/")[1],
-        PRIVATE_REPO: isPrivate ? "1" : "0",
-      },
-    });
-
-    return true;
-  } catch (err) {
-    log(`\nScript run failed for '${repository}'`);
-
-    if (err.code === "ENOENT") {
-      logError(`'${script}' doesn't exist`);
-    }
-
-    if (!process.stdin.isTTY) {
-      throw err;
-    }
-
-    return false;
-  }
-}
-
 async function processRepository({
   script,
   branch,
@@ -85,10 +59,11 @@ async function processRepository({
   repository,
   ask,
   dryRun,
+  verbose,
 }) {
   await fs.rm(`./${WORKSPACE_DIR}/repo`, { recursive: true, force: true });
 
-  if (!cloneRepo(repository, baseBranch, mode)) {
+  if (!cloneRepo(repository, baseBranch, mode, verbose)) {
     log(`Skipping ${repository} - the repository or the branch doesn't exist`);
     return;
   }
@@ -96,10 +71,15 @@ async function processRepository({
   baseBranch ||= runInRepo("git", "branch", "--show-current", {
     encoding: "utf8",
   });
-  log(`Base branch: ${baseBranch}`);
 
   if (baseBranch !== branch) {
-    runInRepo("git", "checkout", "-b", branch);
+    runInRepo(
+      "git",
+      "checkout",
+      "-b",
+      branch,
+      verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+    );
   }
 
   const startingCommit = runInRepo("git", "rev-parse", "HEAD", {
@@ -107,15 +87,28 @@ async function processRepository({
   });
 
   const [owner, repoNoOwner] = repository.split("/");
+  const { isPrivate, isArchived } = await getRepoInfo(owner, repoNoOwner);
 
-  log(`Running '${script}' for '${repository}'...`);
+  if (isArchived) {
+    logWarning(`Skipping ${repository} - repository is archived`);
+    return;
+  }
 
   while (true) {
-    const succeeded = runScript(
-      repository,
-      script,
-      isRepoPrivate(owner, repoNoOwner)
-    );
+    const runMessage = `${repository}`;
+    let succeeded;
+
+    if (verbose) {
+      log(`${runMessage}...`);
+      succeeded = runScriptVerbose(runMessage, script, isPrivate);
+    } else {
+      succeeded = await runScriptQuiet(
+        repository,
+        script,
+        isPrivate,
+        runMessage
+      );
+    }
 
     createCommitIfNeeded("automatic changes");
 
@@ -124,7 +117,7 @@ async function processRepository({
     }
 
     log(
-      "\x07[s] to skip this repo, [p] to make a PR anyway, [l] to run lint-to-the-future ignore, [q] to quit, [r] or [enter] to retry the script"
+      "\x07[s] to skip this repo, [l] to run lint-to-the-future ignore, [p] to make a PR anyway, [q] to quit, [r] or [enter] to retry the script"
     );
 
     const action = await waitForAction(SCRIPT_ACTIONS);
@@ -142,54 +135,79 @@ async function processRepository({
     } else if (action === "lttf") {
       createCommitIfNeeded("manual changes");
       log("Running lint-to-the-future...");
-      runInRepo("pnpm", "lttf:ignore");
+      runInRepo(
+        "pnpm",
+        "lttf:ignore",
+        verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+      );
       continue;
     } else if (action === "retry") {
       createCommitIfNeeded("manual changes");
-      log(`Retrying ${repository}`);
+      log("Retrying");
       continue;
     }
   }
 
   if (!anyNewCommits(startingCommit)) {
-    log(`✅ '${repository}' is already up to date`);
+    log(`✅ ${repository} is already up to date`);
   }
 
+  const prefix = dryRun ? "[dry-run] " : "";
+  const commitCount = runInRepo(
+    "git",
+    "rev-list",
+    "--count",
+    `${startingCommit}..HEAD`,
+    { encoding: "utf8" }
+  );
+  const diffStat = runInRepo("git", "diff", "--shortstat", startingCommit, {
+    encoding: "utf8",
+  });
+
+  if (verbose) {
+    log(`${prefix}${repository} done`);
+  }
+
+  log(
+    `${commitCount} commit${parseInt(commitCount, 10) === 1 ? "" : "s"}${diffStat ? `, ${diffStat}` : ""}`
+  );
+
+  let action;
   if (ask) {
-    log(`'${repository}' done`);
     log(
       `Review result in ./${WORKSPACE_DIR}/repo. Press [c] or [enter] to continue, or [q] to quit.`
     );
-    const action = await waitForAction(ASK_ACTIONS);
-
-    createCommitIfNeeded("manual changes");
-
-    if (action === "quit") {
-      log(`Exiting...`);
-      exit(1);
-    }
+    action = await waitForAction(ASK_ACTIONS);
   } else if (dryRun) {
-    log(`[dry-run] '${repository}' done`);
     log(
       `[dry-run] Review result in ./${WORKSPACE_DIR}/repo. Press [n] to try next repo, or [q] to quit.`
     );
-    const action = await waitForAction(DRY_RUN_ACTIONS);
+    action = await waitForAction(DRY_RUN_ACTIONS);
+  }
 
-    createCommitIfNeeded("manual changes");
+  createCommitIfNeeded("manual changes");
 
-    if (action === "next") {
-      return;
-    } else {
-      exit(1);
-    }
+  if (action === "quit") {
+    log("Exiting...");
+    exit(1);
+  } else if (action === "next") {
+    return;
   }
 
   if (!anyNewCommits(startingCommit)) {
     return;
   }
 
-  log(`Updating '${branch}' branch for '${repository}'`);
-  runInRepo("git", "push", "--no-progress", "-f", "origin", branch);
+  log(`Updating '${branch}' branch for ${repository}`);
+  runInRepo(
+    "git",
+    "push",
+    "--no-progress",
+    "-f",
+    "origin",
+    branch,
+    verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] }
+  );
 
   // Don't create a PR when updating an existing branch
   if (baseBranch === branch) {
@@ -210,6 +228,8 @@ async function processRepository({
 async function massPR(args) {
   await fs.rm(`./${WORKSPACE_DIR}`, { recursive: true, force: true });
   await fs.mkdir(`./${WORKSPACE_DIR}`);
+
+  log(`Running ${args.script}`);
 
   for (const repository of args.repositories) {
     await processRepository({ ...args, repository });
@@ -271,6 +291,11 @@ yargs(hideBin(process.argv))
         .option("dry-run", {
           type: "boolean",
           description: "Abort before pushing changes to GitHub",
+        })
+        .option("verbose", {
+          type: "boolean",
+          default: false,
+          description: "Show full script output",
         })
         .positional("repositories", {
           describe:

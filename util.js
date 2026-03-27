@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { env } from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
 import readline from "readline";
@@ -6,39 +6,77 @@ import { octokit } from "./octokit.js";
 
 export const WORKSPACE_DIR = "mass-pr-workspace";
 export const SKIPPED_REPOS_PATH = `${WORKSPACE_DIR}/skipped_repos.txt`;
-const RESET = "\x1b[0m";
 const MASS_PR_LABEL = "mass-pr";
-const LABEL_RETRY_COUNT = 2;
-const LABEL_RETRY_DELAY_MS = 2_000;
+const RETRY_COUNT = 2;
+const RETRY_DELAY_MS = 2_000;
+const ELLIPSIS_FRAMES = [".  ", ".. ", "...", "   "];
+const ELLIPSIS_INTERVAL = 400;
+const TEXT_RESET = "\x1b[0m";
+const TEXT_GREEN = "\x1b[32m";
+const TEXT_YELLOW = "\x1b[33m";
+const TEXT_RED = "\x1b[31m";
 
 export function log(...message) {
-  const green = "\x1b[32m";
   // eslint-disable-next-line no-console
-  console.log(`${green}[mass-pr]${RESET}`, ...message);
+  console.log(`${TEXT_GREEN}[mass-pr]${TEXT_RESET}`, ...message);
+}
+
+export function logWarning(...message) {
+  // eslint-disable-next-line no-console
+  console.error(`${TEXT_YELLOW}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
 export function logError(...message) {
-  const red = "\x1b[31m";
   // eslint-disable-next-line no-console
-  console.error(`${red}[mass-pr]${RESET}`, ...message);
+  console.error(`${TEXT_RED}[mass-pr]${TEXT_RESET}`, ...message);
 }
 
-export function run(cmd, ...args) {
+function parseRunArgs(cmd, args) {
   let opts = {};
 
   while (typeof args.at(-1) === "object") {
     Object.assign(opts, args.pop());
   }
 
-  if (!opts.encoding) {
+  const [file, fileArgs] = cmd.endsWith(".rb")
+    ? ["ruby", [cmd, ...args]]
+    : [cmd, args];
+
+  return [file, fileArgs, opts];
+}
+
+export function run(cmd, ...args) {
+  const [file, fileArgs, opts] = parseRunArgs(cmd, args);
+
+  if (!opts.encoding && !opts.stdio) {
     opts.stdio = "inherit";
   }
 
-  if (cmd.endsWith(".rb")) {
-    return execFileSync("ruby", [cmd, ...args], opts)?.trim();
-  } else {
-    return execFileSync(cmd, args, opts)?.trim();
-  }
+  const result = execFileSync(file, fileArgs, opts);
+  return typeof result === "string" ? result.trim() : result;
+}
+
+export function runAsync(cmd, ...args) {
+  const [file, fileArgs, opts] = parseRunArgs(cmd, args);
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, fileArgs, opts);
+    const output = [];
+
+    child.stdout?.on("data", (chunk) => output.push(chunk));
+    child.stderr?.on("data", (chunk) => output.push(chunk));
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        const err = new Error(`Process exited with code ${code}`);
+        err.output = Buffer.concat(output).toString("utf8");
+        reject(err);
+      }
+    });
+  });
 }
 
 export function runInRepo(cmd, ...args) {
@@ -91,7 +129,7 @@ export function createCommitIfNeeded(message) {
   runInRepo("git", "commit", "-q", "-m", message);
 }
 
-export function cloneRepo(repository, baseBranch, mode) {
+export function cloneRepo(repository, baseBranch, mode, verbose = true) {
   const url =
     mode === "ssh"
       ? `git@github.com:${repository}`
@@ -106,7 +144,7 @@ export function cloneRepo(repository, baseBranch, mode) {
   args.push(url, `${WORKSPACE_DIR}/repo`);
 
   try {
-    run(...args);
+    run(...args, verbose ? {} : { stdio: ["inherit", "pipe", "pipe"] });
     return true;
   } catch {
     return false;
@@ -125,11 +163,11 @@ async function addPullRequestLabel(owner, repo, issueNumber, attempt = 0) {
       }
     );
   } catch (error) {
-    if (attempt === LABEL_RETRY_COUNT) {
+    if (attempt === RETRY_COUNT) {
       throw error;
     }
 
-    await wait(LABEL_RETRY_DELAY_MS);
+    await wait(RETRY_DELAY_MS);
     await addPullRequestLabel(owner, repo, issueNumber, attempt + 1);
   }
 }
@@ -141,7 +179,8 @@ export async function createPullRequest(
   head,
   base,
   body,
-  repository
+  repository,
+  attempt = 0
 ) {
   let pullRequest;
 
@@ -160,30 +199,125 @@ export async function createPullRequest(
 
     if (errorMessage && /A pull request already exists/.test(errorMessage)) {
       log(
-        `✅ PR already exists for '${repository}': https://github.com/${repository}/pulls`
+        `✅ PR already exists for ${repository}: https://github.com/${repository}/pulls`
       );
       return;
-    } else {
-      logError(error);
-      throw `❓ Failed to create PR for '${repository}'`;
     }
+
+    if (error.status >= 500 && attempt < RETRY_COUNT) {
+      logWarning(
+        `Server error (${error.status}) creating PR for ${repository}, retrying...`
+      );
+      await wait(RETRY_DELAY_MS);
+      return createPullRequest(
+        owner,
+        repo,
+        title,
+        head,
+        base,
+        body,
+        repository,
+        attempt + 1
+      );
+    }
+
+    logError(error);
+    throw `❓ Failed to create PR for ${repository}`;
   }
 
   try {
     await addPullRequestLabel(owner, repo, pullRequest.number);
   } catch (error) {
     logError(error);
-    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for '${repository}'`;
+    throw `❓ Failed to add '${MASS_PR_LABEL}' label to PR for ${repository}`;
   }
 
-  log(`✅ PR ready for '${repository}': ${pullRequest.html_url}`);
+  log(`✅ PR ready for ${repository}: ${pullRequest.html_url}`);
 }
 
-export async function isRepoPrivate(owner, repo) {
+export async function getRepoInfo(owner, repo) {
   const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
     owner,
     repo,
   });
 
-  return data.private;
+  return { isPrivate: data.private, isArchived: data.archived };
+}
+
+export function startSpinner(prefix) {
+  let i = 0;
+  const frame = () =>
+    `\r${prefix}${ELLIPSIS_FRAMES[i++ % ELLIPSIS_FRAMES.length]}\n`;
+
+  process.stdout.write(frame());
+  const id = setInterval(
+    () => process.stdout.write(`\x1b[A${frame()}`),
+    ELLIPSIS_INTERVAL
+  );
+
+  return () => {
+    clearInterval(id);
+    process.stdout.write(`\x1b[A\r${prefix}... ${TEXT_GREEN}✔${TEXT_RESET}\n`);
+  };
+}
+
+function scriptOpts(repository, isPrivate, verbose = true) {
+  return {
+    cwd: `./${WORKSPACE_DIR}`,
+    encoding: verbose ? undefined : "utf8",
+    env: {
+      ...cleanEnv(),
+      CLICOLOR_FORCE: "1",
+      FORCE_COLOR: "1",
+      PACKAGE_NAME: repository.split("/")[1],
+      PRIVATE_REPO: isPrivate ? "1" : "0",
+    },
+  };
+}
+
+export function runScriptVerbose(repository, script, isPrivate) {
+  try {
+    run(`../${script}`, scriptOpts(repository, isPrivate));
+    return true;
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    }
+
+    logError(`Script run failed for ${repository}`);
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
+}
+
+export async function runScriptQuiet(repository, script, isPrivate, message) {
+  const stopEllipsisAnimation = startSpinner(
+    `${TEXT_GREEN}[mass-pr]${TEXT_RESET} ${message}`
+  );
+
+  try {
+    await runAsync(`../${script}`, scriptOpts(repository, isPrivate, false));
+    stopEllipsisAnimation();
+    return true;
+  } catch (err) {
+    stopEllipsisAnimation();
+
+    if (err.code === "ENOENT") {
+      logError(`'${script}' doesn't exist`);
+    } else if (err.output) {
+      process.stdout.write(err.output);
+    }
+
+    logError(`Script run failed for ${repository}`);
+
+    if (!process.stdin.isTTY) {
+      throw err;
+    }
+
+    return false;
+  }
 }
