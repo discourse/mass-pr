@@ -41,7 +41,7 @@ run_jq_on_package_json <<'JQ'
 .private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "3.0.0",
+    "@discourse/lint-configs": "3.0.1",
     "@glint/ember-tsc": "1.1.1",
     "concurrently": "^9.2.1",
     "discourse": "npm:@discourse/types@2026.3.0-d02b2966",
