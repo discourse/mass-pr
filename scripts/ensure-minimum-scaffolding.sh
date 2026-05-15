@@ -41,11 +41,10 @@ run_jq_on_package_json <<'JQ'
 .private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "2.44.1",
+    "@discourse/lint-configs": "3.0.0",
     "@glint/ember-tsc": "1.1.1",
     "concurrently": "^9.2.1",
     "discourse": "npm:@discourse/types@2026.3.0-d02b2966",
-    "ember-template-lint": "7.9.3",
     "eslint": "9.39.2",
     "lint-to-the-future": "^2.6.4",
     "lint-to-the-future-eslint": "^3.3.0",
@@ -55,6 +54,7 @@ run_jq_on_package_json <<'JQ'
   # Sort deps alphabetically
   .devDependencies = (.devDependencies | to_entries | sort_by(.key) | from_entries) |
   del(.devDependencies["@babel/plugin-proposal-decorators"]) |
+  del(.devDependencies["ember-template-lint"]) |
 
   .scripts = (.scripts // {}) |
 
@@ -80,13 +80,13 @@ if [ -f "repo/plugin.rb" ]; then
     "lint:css:fix": "pnpm stylelint 'assets/stylesheets/**/*.scss' --fix --allow-empty-input",
     "lint:js": "eslint {assets,admin/assets,test}/javascripts --cache --no-error-on-unmatched-pattern",
     "lint:js:fix": "eslint {assets,admin/assets,test}/javascripts --fix --no-error-on-unmatched-pattern",
-    "lint:hbs": "ember-template-lint '{assets,admin/assets,test}/javascripts/**/*.gjs' --no-error-on-unmatched-pattern",
-    "lint:hbs:fix": "ember-template-lint '{assets,admin/assets,test}/javascripts/**/*.gjs' --fix --no-error-on-unmatched-pattern",
     "lint:prettier": "pnpm prettier 'assets/stylesheets/**/*.scss' '{assets,admin/assets,test}/javascripts/**/*.{js,gjs}' --check --no-error-on-unmatched-pattern",
     "lint:prettier:fix": "pnpm prettier 'assets/stylesheets/**/*.scss' '{assets,admin/assets,test}/javascripts/**/*.{js,gjs}' -w --no-error-on-unmatched-pattern",
     "lint:types": "ember-tsc -b",
     "lttf:ignore": "lint-to-the-future ignore"
-  }
+  } |
+  del(.scripts["lint:hbs"]) |
+  del(.scripts["lint:hbs:fix"])
 JQ
 else # Theme
   run_jq_on_package_json <<'JQ'
@@ -97,13 +97,13 @@ else # Theme
     "lint:css:fix": "pnpm stylelint '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' --fix --allow-empty-input",
     "lint:js": "eslint {javascripts,test} --cache --no-error-on-unmatched-pattern",
     "lint:js:fix": "eslint {javascripts,test} --fix --no-error-on-unmatched-pattern",
-    "lint:hbs": "ember-template-lint 'javascripts/**/*.gjs' --no-error-on-unmatched-pattern",
-    "lint:hbs:fix": "ember-template-lint 'javascripts/**/*.gjs' --fix --no-error-on-unmatched-pattern",
     "lint:prettier": "pnpm prettier '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' '{javascripts,test}/**/*.{js,gjs}' --check --no-error-on-unmatched-pattern",
     "lint:prettier:fix": "pnpm prettier '{javascripts,desktop,mobile,common,scss,stylesheets}/**/*.scss' '{javascripts,test}/**/*.{js,gjs}' -w --no-error-on-unmatched-pattern",
     "lint:types": "ember-tsc -b",
     "lttf:ignore": "lint-to-the-future ignore"
-  }
+  } |
+  del(.scripts["lint:hbs"]) |
+  del(.scripts["lint:hbs:fix"])
 JQ
 fi
 
