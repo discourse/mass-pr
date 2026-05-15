@@ -12,6 +12,7 @@ rm -f .eslintrc.js
 rm -f .prettierrc
 rm -f .prettierrc.js
 rm -f .template-lintrc.js
+rm -f .template-lintrc.cjs
 rm -f .eslintrc.cjs
 
 rm -f package-lock.json
@@ -20,11 +21,9 @@ rm -f package-lock.json
 if [ -f "plugin.rb" ]; then
   cp -vn ../discourse-plugin-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-plugin-skeleton/.prettierrc.cjs . || true
-  cp -vn ../discourse-plugin-skeleton/.template-lintrc.cjs . || true
 else # Theme
   cp -vn ../discourse-theme-skeleton/eslint.config.mjs . || true
   cp -vn ../discourse-theme-skeleton/.prettierrc.cjs . || true
-  cp -vn ../discourse-theme-skeleton/.template-lintrc.cjs . || true
 fi
 
 if git diff --quiet package.json; then
@@ -55,13 +54,6 @@ if [ -f "plugin.rb" ]; then
   pnpm eslint --fix --max-warnings 0 --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
 else # Theme
   pnpm eslint --fix --max-warnings 0 --no-error-on-unmatched-pattern {test,javascripts} || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
-fi
-
-if [ -f "plugin.rb" ]; then
-  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'assets/javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
-  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'admin/assets/javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
-else # Theme
-  pnpm ember-template-lint --fix --print-full-path --no-error-on-unmatched-pattern 'javascripts' || (echo "[update-js-linting] ember-template-lint failed, fix violations and re-run script" && exit 1)
 fi
 
 if [ -f "plugin.rb" ]; then
