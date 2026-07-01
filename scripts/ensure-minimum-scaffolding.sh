@@ -41,13 +41,13 @@ run_jq_on_package_json <<'JQ'
 .private = true |
   .devDependencies = (.devDependencies // {}) |
   .devDependencies *= {
-    "@discourse/lint-configs": "3.1.0",
+    "@discourse/lint-configs": "3.1.2",
     "@glint/ember-tsc": "1.1.1",
     "concurrently": "^9.2.1",
     "discourse": "npm:@discourse/types@2026.3.0-d02b2966",
-    "eslint": "10.5.0",
-    "lint-to-the-future": "^2.6.4",
-    "lint-to-the-future-eslint": "^3.3.0",
+    "eslint": "10.6.0",
+    "lint-to-the-future": "^3.2.0",
+    "lint-to-the-future-eslint": "^4.0.0",
     "prettier": "3.8.1",
     "stylelint": "17.5.0"
   } |
