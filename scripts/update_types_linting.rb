@@ -16,7 +16,7 @@ else
   FileUtils.cp("../discourse-theme-skeleton/tsconfig.json", ".")
 end
 
-if Dir["./**/*.{js,gjs}"].none?
+if Dir["./**/*.{js,gjs,ts,gts}"].none?
   puts "[update-types-linting] no js/gjs files found"
   exit 0
 end
