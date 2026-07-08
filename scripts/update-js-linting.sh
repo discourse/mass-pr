@@ -57,9 +57,9 @@ else # Theme
 fi
 
 if [ -f "plugin.rb" ]; then
-  pnpm prettier --write '{assets,admin/assets,test}/**/*.{scss,js,mjs,cjs,gjs,hbs}' --no-error-on-unmatched-pattern
+  pnpm prettier --write '{assets,admin/assets,test}/**/*.{scss,js,mjs,cjs,gjs,ts,gts,mts,cts,hbs}' --no-error-on-unmatched-pattern
 else # Theme
-  pnpm prettier --write '{javascripts,desktop,mobile,common,scss,test,stylesheets}/**/*.{scss,js,mjs,cjs,gjs,hbs}' --no-error-on-unmatched-pattern
+  pnpm prettier --write '{javascripts,desktop,mobile,common,scss,test,stylesheets}/**/*.{scss,js,mjs,cjs,gjs,ts,gts,mts,cts,hbs}' --no-error-on-unmatched-pattern
 fi
 
 # Do an extra check after prettier
