@@ -16,7 +16,7 @@ fi
 
 # Add stree
 if ! grep -q 'syntax_tree' Gemfile; then
-  sed -i "" "s/gem .rubocop-discourse./gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
+  perl -pi -e "s/gem .rubocop-discourse./gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
   if ! grep -q 'syntax_tree' Gemfile; then
     echo "Unable to automatically install syntax tree. Please fix the Gemfile and restart the script;"
     exit 1
@@ -28,10 +28,10 @@ if grep -q 'syntax_tree-disable_ternary' Gemfile; then
   ruby -e 'File.write("Gemfile", File.read("Gemfile").gsub(/^\s*gem .syntax_tree-disable_ternary.\n/, ""))'
 fi
 if grep -q ',disable_ternary' .streerc; then
-  sed -i "" "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
+  perl -pi -e "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
 fi
 
-sed -i "" "s/default.yml/stree-compat.yml/" .rubocop.yml
+perl -pi -e "s/default.yml/stree-compat.yml/" .rubocop.yml
 
 if [ ! -f "Gemfile.lock" ]; then
   bundle install
@@ -49,10 +49,10 @@ bundle lock --remove-platform arm64-darwin-21 &> /dev/null || true
 bundle lock --remove-platform arm64-darwin-22 &> /dev/null || true
 
 # Remove unnecessary requires
-test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/require "rails_helper"//'
+test -d spec && find spec/ -name "*.rb" | xargs -r perl -pi -e 's/require "rails_helper"//'
 
 # Remove unnecessary `js: true` flags in specs
-test -d spec && find spec/ -name "*.rb" | xargs sed -i '' 's/, js: true//'
+test -d spec && find spec/ -name "*.rb" | xargs -r perl -pi -e 's/, js: true//'
 
 # Format and lint
 bundle exec stree write Gemfile $(git ls-files "*.rb") $(git ls-files "*.rake")
