@@ -48,7 +48,7 @@ if [ -f "plugin.rb" ]; then
 fi
 
 # Fix i18n helper invocations
-find . -type f -not -path './node_modules*' -a -name "*.hbs" | xargs sed -i '' 's/{{I18n/{{i18n/g'
+find . -type f -not -path './node_modules*' -a -name "*.hbs" | xargs -r perl -pi -e 's/\{\{I18n/{{i18n/g'
 
 if [ -f "plugin.rb" ]; then
   pnpm eslint --fix --max-warnings 0 --no-error-on-unmatched-pattern {test,assets,admin/assets}/javascripts || (echo "[update-js-linting] eslint failed, fix violations and re-run script" && exit 1)
