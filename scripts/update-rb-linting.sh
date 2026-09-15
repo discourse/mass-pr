@@ -3,41 +3,7 @@ set -euxo pipefail
 
 cd repo
 
-# Copy these files from skeleton if they do not already exist
-if [ -f "plugin.rb" ]; then
-  cp -vn ../discourse-plugin-skeleton/.streerc . || true
-  cp -vn ../discourse-plugin-skeleton/.rubocop.yml . || true
-  cp -vn ../discourse-plugin-skeleton/Gemfile . || true
-else # Theme
-  cp -vn ../discourse-theme-skeleton/.streerc . || true
-  cp -vn ../discourse-theme-skeleton/.rubocop.yml . || true
-  cp -vn ../discourse-theme-skeleton/Gemfile . || true
-fi
-
-# Add stree
-if ! grep -q 'syntax_tree' Gemfile; then
-  perl -pi -e "s/gem .rubocop-discourse./gem 'rubocop-discourse'; gem 'syntax_tree'/" Gemfile
-  if ! grep -q 'syntax_tree' Gemfile; then
-    echo "Unable to automatically install syntax tree. Please fix the Gemfile and restart the script;"
-    exit 1
-  fi
-fi
-
-# Remove the old stree plugin
-if grep -q 'syntax_tree-disable_ternary' Gemfile; then
-  ruby -e 'File.write("Gemfile", File.read("Gemfile").gsub(/^\s*gem .syntax_tree-disable_ternary.\n/, ""))'
-fi
-if grep -q ',disable_ternary' .streerc; then
-  perl -pi -e "s:trailing_comma.*:trailing_comma,plugin/disable_auto_ternary:" .streerc
-fi
-
-perl -pi -e "s/default.yml/stree-compat.yml/" .rubocop.yml
-
-if [ ! -f "Gemfile.lock" ]; then
-  bundle install
-fi
-bundle update --bundler
-bundle update --all
+# Scaffolding, dependency installation, and updates are handled by update-skeleton.sh.
 
 bundle lock --add-platform ruby
 bundle lock --remove-platform x86_64-linux &> /dev/null || true

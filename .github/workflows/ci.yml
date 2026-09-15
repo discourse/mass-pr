@@ -42,3 +42,7 @@ jobs:
       - name: ESLint
         if: ${{ !cancelled() }}
         run: pnpm eslint .
+
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: pnpm test

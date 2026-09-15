@@ -24,24 +24,31 @@ repositories).
 
 For detailed usage instructions, run `pnpm mass-pr --help`.
 
-For example, to run `update-linting.sh` for the `discourse-solved` and `discourse-assign` plugins, you would run:
+For example, to run `update-skeleton.sh` for the `discourse-solved` and `discourse-assign` plugins, you would run:
 
 ```bash
 GITHUB_TOKEN=... pnpm mass-pr \
   --message "DEV: Update linting config & dependencies" \
-  --branch "update-linting" \
-  --script scripts/update-linting.sh \
+  --branch "update-skeleton" \
+  --script scripts/update-skeleton.sh \
   discourse-solved \
   discourse-assign
 ```
+
+`update-skeleton.sh` runs `pnpx @discourse/update-skeleton@latest` inside the
+repository to update scaffolding and install dependencies. It then runs mass-pr's
+existing source migrations, dependency updates/deduplication, Ruby lockfile
+platform cleanup, lint autofixes, and type checks. `update-linting.sh` remains an
+alias for existing invocations. The individual lint helpers expect scaffolding
+and dependencies to have been set up by `update-skeleton.sh`.
 
 To load the list of plugins from a text file, you could use something like:
 
 ```bash
 GITHUB_TOKEN=... pnpm mass-pr \
   --message "DEV: Update linting config & dependencies" \
-  --branch "update-linting" \
-  --script scripts/update-linting.sh \
+  --branch "update-skeleton" \
+  --script scripts/update-skeleton.sh \
   $(cat plugin-list.txt)
 ```
 
