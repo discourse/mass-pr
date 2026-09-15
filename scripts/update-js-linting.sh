@@ -4,32 +4,13 @@ set -euxo pipefail
 cd repo
 
 # Rename all *.js.es6 to *.js
-find . -depth -name "*.js.es6" -exec sh -c 'mv "$1" "${1%.es6}"' _ {} \;
+find . -type d \( -name node_modules -o -name .git \) -prune -o -type f -name "*.js.es6" -exec sh -c 'mv "$1" "${1%.es6}"' _ {} \;
 
-# Remove the old config files
-rm -f .eslintrc
-rm -f .eslintrc.js
-rm -f .prettierrc
-rm -f .prettierrc.js
-rm -f .template-lintrc.js
-rm -f .template-lintrc.cjs
-rm -f .eslintrc.cjs
-
+# Scaffolding and dependency installation are handled by update-skeleton.sh.
 rm -f package-lock.json
 
-# Copy these files from skeleton if they do not already exist
-if [ -f "plugin.rb" ]; then
-  cp -vn ../discourse-plugin-skeleton/eslint.config.mjs . || true
-  cp -vn ../discourse-plugin-skeleton/.prettierrc.cjs . || true
-else # Theme
-  cp -vn ../discourse-theme-skeleton/eslint.config.mjs . || true
-  cp -vn ../discourse-theme-skeleton/.prettierrc.cjs . || true
-fi
-
-if git diff --quiet package.json; then
-  pnpm install
-else
-  # If package.json has changed, update all dependencies
+if ! git diff --quiet package.json; then
+  # Preserve mass-pr's broader dependency refresh when the manifest changes.
   pnpm update
 fi
 
@@ -37,7 +18,15 @@ pnpm dedupe
 
 # Move tests out of test/javascripts
 if [[ ! -f "plugin.rb" && -d "test/javascripts" ]]; then
-  mv test/javascripts/* test/
+  # Include hidden files and allow retries after a previous run moved the tests.
+  (
+    shopt -s nullglob dotglob
+    files=(test/javascripts/*)
+    if (( ${#files[@]} )); then
+      mv "${files[@]}" test/
+    fi
+    rmdir test/javascripts
+  )
 fi
 
 # Remove the old transpile_js option

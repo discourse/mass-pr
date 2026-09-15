@@ -4,7 +4,8 @@
   "description": "A tool for creating automated PRs across multiple GitHub repositories",
   "main": "mass-pr.js",
   "scripts": {
-    "mass-pr": "./mass-pr.js"
+    "mass-pr": "./mass-pr.js",
+    "test": "node --test"
   },
   "repository": "https://github.com/discourse/mass-pr",
   "author": "Discourse Team",

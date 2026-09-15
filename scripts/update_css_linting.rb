@@ -1,14 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "fileutils"
-
 Dir.chdir("repo")
-
-# Copy the config from skeleton if it does not already exist
-if !File.exist?("stylelint.config.mjs")
-  FileUtils.cp("../discourse-plugin-skeleton/stylelint.config.mjs", ".")
-end
 
 files =
   if File.exist?("plugin.rb")
